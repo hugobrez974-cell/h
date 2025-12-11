@@ -1,0 +1,52 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: system-ui, sans-serif;
+  background: #0f1226;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+h1 {
+  text-align: center;
+  margin: 10px;
+}
+
+#onlineUsers {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #444;
+  margin: 0 10px;
+  padding: 10px;
+  background: #1d214a;
+}
+
+.inputArea {
+  display: flex;
+  padding: 10px;
+  background: #171a39;
+}
+
+.inputArea input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+}
+
+.inputArea button {
+  margin-left: 10px;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  background: #5b6cff;
+  color: white;
+  cursor: pointer;
+}
