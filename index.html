@@ -1,11 +1,210 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Test Render</title>
+    <meta charset="UTF-8">
+    <title>Lettre de Saint-Valentin</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #ffdde6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #c2185b;
+            margin-bottom: 20px;
+        }
+
+        @keyframes arrivee {
+            0% { transform: translateY(-300px) scale(0.5); opacity: 0; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .enveloppe {
+            width: 260px;
+            height: 180px;
+            background: #fff;
+            border: 3px solid #c2185b;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            animation: arrivee 1.2s ease-out forwards;
+            transition: transform 0.5s;
+        }
+
+        .enveloppe.ouverte {
+            transform: rotateX(20deg) scale(1.05);
+        }
+
+        .cadenas {
+            font-size: 45px;
+            color: #c2185b;
+            transition: transform 0.3s;
+        }
+
+        .formulaire {
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .message {
+            margin-top: 25px;
+            max-width: 400px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #fff0f5;
+            border: 2px solid #c2185b;
+            display: none;
+            text-align: center;
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .choix {
+            margin-top: 20px;
+            display: none;
+            text-align: center;
+        }
+
+        .choix button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #c2185b;
+            color: white;
+            font-size: 16px;
+        }
+
+        .code32 {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #c2185b;
+            display: none;
+        }
+
+        .copie {
+            margin-top: 10px;
+            color: green;
+            display: none;
+        }
+
+        .erreur {
+            color: #b00020;
+            margin-top: 10px;
+            min-height: 18px;
+        }
+    </style>
 </head>
 <body>
-  <h1>🎉 Déploiement réussi !</h1>
-  <p>Si tu vois cette page, ton serveur fonctionne.</p>
+
+    <h1>Lettre secrète de Saint-Valentin</h1>
+
+    <div class="enveloppe" id="enveloppe">
+        <div class="cadenas" id="cadenas">🔒</div>
+    </div>
+
+    <div class="formulaire" id="formulaire">
+        <p>Entre ton prénom (avec les majuscule et tout ) :</p>
+        <input type="text" id="prenom" placeholder="Prénom">
+        <br>
+        <button id="btnOuvrir">Valider</button>
+        <div class="erreur" id="erreur"></div>
+    </div>
+
+    <div class="message" id="message">
+        <h2>Pour toi ❤️</h2>
+        <p>
+           Salut ! Enfaite je suis un peu beaucoup timide je suis tomber amoureux de toi depuis tres longtemps.
+           Tu vas trouver sa debile que un mec qui joue et qui code beaucoup soit amoureux de toi mais bref.
+           Je le dis avant la saint valentin meme si tu vas reconnaitre qui t'a envoyer cette lettre.
+        </p>
+    </div>
+
+    <div class="choix" id="choix">
+        <p>Alors… tu veux bien être ma Valentine ? ❤️</p>
+        <button id="oui">Oui</button>
+        <button id="non">Non</button>
+    </div>
+
+    <div class="code32" id="code32"></div>
+    <div class="copie" id="copie">✔ Code copié ! Envoie-le moi.</div>
+
+    <script>
+        const PRENOM_ATTENDU = "Maewënne";
+
+        const cadenas = document.getElementById("cadenas");
+        const formulaire = document.getElementById("formulaire");
+        const btnOuvrir = document.getElementById("btnOuvrir");
+        const prenomInput = document.getElementById("prenom");
+        const erreurDiv = document.getElementById("erreur");
+        const enveloppe = document.getElementById("enveloppe");
+        const messageDiv = document.getElementById("message");
+        const choixDiv = document.getElementById("choix");
+        const code32Div = document.getElementById("code32");
+        const copieDiv = document.getElementById("copie");
+
+        cadenas.addEventListener("click", () => {
+            formulaire.style.display = "block";
+            cadenas.textContent = "🔓";
+        });
+
+        btnOuvrir.addEventListener("click", () => {
+            const prenom = prenomInput.value.trim();
+
+            if (prenom.toLowerCase() === PRENOM_ATTENDU.toLowerCase()) {
+                erreurDiv.textContent = "";
+                enveloppe.classList.add("ouverte");
+                cadenas.textContent = "💌";
+                messageDiv.style.display = "block";
+                choixDiv.style.display = "block";
+            } else {
+                erreurDiv.textContent = "Acces interdit 🔒.";
+                messageDiv.style.display = "none";
+                choixDiv.style.display = "none";
+                code32Div.style.display = "none";
+                copieDiv.style.display = "none";
+                cadenas.textContent = "🔓";
+            }
+        });
+
+        function copierTexte(texte) {
+            navigator.clipboard.writeText(texte).then(() => {
+                copieDiv.style.display = "block";
+            });
+        }
+
+        document.getElementById("oui").addEventListener("click", () => {
+            const code = "Envoie moi le code ci dessous : L4IR/9qhNwh5i91NUpWl27AAHVSzd1OlOC823zEyL80=";
+            code32Div.textContent = code;
+            code32Div.style.display = "block";
+            copierTexte(code);
+        });
+
+        document.getElementById("non").addEventListener("click", () => {
+            const code = "Envoie moi le code ci dessous : 6cCqkm03rbZjPB66py2KFsLjjsZ7NHuU9IJAwb/g75s=";
+            code32Div.textContent = code;
+            code32Div.style.display = "block";
+            copierTexte(code);
+        });
+    </script>
+
 </body>
 </html>
