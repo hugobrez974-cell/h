@@ -12,18 +12,9 @@
       justify-content: center; align-items: center; z-index: 20;
     }
 
-    #loadingLogo {
-      width: 180px; margin-bottom: 20px;
-    }
-
-    #loadingBar {
-      width: 200px; height: 6px; background: #222; border-radius: 4px;
-      overflow: hidden;
-    }
-
-    #loadingFill {
-      width: 0%; height: 100%; background: red; transition: .3s;
-    }
+    #loadingLogo { width: 180px; margin-bottom: 20px; }
+    #loadingBar { width: 200px; height: 6px; background: #222; border-radius: 4px; overflow: hidden; }
+    #loadingFill { width: 0%; height: 100%; background: red; transition: .3s; }
 
     #introText {
       position: fixed; top: 50%; right: 50%; transform: translate(50%, -50%);
@@ -46,13 +37,19 @@
 
     #resultsBox .title { color: red; font-weight: bold; margin-bottom: .4rem; }
 
-    #newsBox {
+    #newsLeft {
       position: fixed; bottom: 1rem; left: 1rem; width: 420px; height: 260px;
       background: #111; border: 2px solid red; border-radius: 6px;
       overflow: hidden; z-index: 5; display: none;
     }
 
-    #newsBox iframe { width: 100%; height: 100%; border: none; }
+    #newsRight {
+      position: fixed; bottom: 1rem; left: 450px; width: 420px; height: 260px;
+      background: #111; border: 2px solid red; border-radius: 6px;
+      overflow: hidden; z-index: 5; display: none;
+    }
+
+    iframe { width: 100%; height: 100%; border: none; }
   </style>
 </head>
 <body>
@@ -72,8 +69,12 @@
     <div id="resultsList"></div>
   </div>
 
-  <div id="newsBox">
-    <iframe src="https://www.formula1.com/en/latest"></iframe>
+  <div id="newsLeft">
+    <iframe src="https://www.formula1.com/en/latest.html"></iframe>
+  </div>
+
+  <div id="newsRight">
+    <iframe src="https://fr.motorsport.com/f1/"></iframe>
   </div>
 
   <script>
@@ -122,7 +123,8 @@
 
     function showInterface() {
       document.getElementById("resultsBox").style.display = "block";
-      document.getElementById("newsBox").style.display = "block";
+      document.getElementById("newsLeft").style.display = "block";
+      document.getElementById("newsRight").style.display = "block";
     }
 
     async function startLiveResults() {
@@ -151,4 +153,3 @@
 
 </body>
 </html>
-
