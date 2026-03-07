@@ -2,19 +2,13 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>F1 – Live & Interactive</title>
+  <title>F1 Interactive 3D</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
     body {
+      margin: 0;
       background: #000;
       color: #fff;
-      height: 100vh;
+      font-family: Arial, sans-serif;
       overflow: hidden;
     }
 
@@ -37,98 +31,48 @@
       filter: drop-shadow(0 0 15px red);
     }
 
-    #splash span {
-      color: #ccc;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      font-size: 0.8rem;
+    /* Nom utilisateur */
+    #namePrompt {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 1rem;
+      z-index: 9;
     }
 
-    /* Main */
-    #main {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.8s ease, transform 0.8s ease;
-      text-align: center;
-      padding: 2rem;
-      position: relative;
-      height: 100vh;
-    }
-
-    #main.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    h1 {
-      margin-top: 1rem;
-      font-size: 2rem;
-    }
-
-    #liveStatus {
-      margin-top: 0.5rem;
-      color: #ccc;
-    }
-
-    .btn {
-      display: inline-block;
-      margin-top: 1.5rem;
-      padding: 0.7rem 1.6rem;
+    #namePrompt input {
+      padding: 0.7rem 1rem;
       border-radius: 999px;
       border: 1px solid red;
-      color: #fff;
-      text-decoration: none;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      background: transparent;
-      cursor: pointer;
-      transition: background 0.2s ease, transform 0.1s ease;
-    }
-
-    .btn:hover {
-      background: red;
-      transform: translateY(-1px);
-    }
-
-    .username-input {
-      position: absolute;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .username-input input {
-      padding: 0.5rem 0.8rem;
-      border-radius: 999px;
-      border: 1px solid #444;
       background: #111;
       color: #fff;
       outline: none;
     }
 
-    .username-input input:focus {
-      border-color: red;
+    #namePrompt button {
+      padding: 0.6rem 1.4rem;
+      border-radius: 999px;
+      border: 1px solid red;
+      background: transparent;
+      color: #fff;
+      cursor: pointer;
+      text-transform: uppercase;
     }
 
-    /* F1 au milieu */
-    #carContainer {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      perspective: 1000px;
+    #mainUI {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      font-size: 1.5rem;
+      display: none;
     }
 
-    #f1car {
-      width: 320px;
-      filter: drop-shadow(0 0 20px red);
-      transform-style: preserve-3d;
-      transition: transform 0.05s linear;
+    canvas {
+      display: block;
     }
   </style>
 </head>
@@ -136,99 +80,121 @@
 
   <!-- Splash -->
   <div id="splash">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" alt="F1 Logo">
-    <span>CHARGEMENT DU PADDOCK...</span>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
+    <span>Chargement...</span>
   </div>
 
-  <!-- Main -->
-  <div id="main">
-    <h1 id="hello">Bonjour pilote</h1>
-    <p id="liveStatus">Chargement du statut de la course...</p>
-    <div id="liveButton"></div>
-
-    <!-- F1 au milieu -->
-    <div id="carContainer">
-      <!-- Remplace l’image par ta propre F1 si tu veux -->
-      <img id="f1car" src="https://i.imgur.com/8QZQZyC.png" alt="F1 Car">
-    </div>
-
-    <!-- Nom utilisateur -->
-    <div class="username-input">
-      <input type="text" id="username" placeholder="Ton nom">
-      <button class="btn" id="saveName">Valider</button>
-    </div>
+  <!-- Demande du nom -->
+  <div id="namePrompt">
+    <h2>Entre ton nom pilote</h2>
+    <input type="text" id="username" placeholder="Ton nom">
+    <button id="saveName">Valider</button>
   </div>
+
+  <!-- UI principale -->
+  <div id="mainUI">
+    <span id="hello"></span>
+  </div>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152/examples/js/loaders/GLTFLoader.js"></script>
 
   <script>
-    // Splash
+    /* --- Splash --- */
     window.addEventListener('load', () => {
       setTimeout(() => {
-        const splash = document.getElementById('splash');
-        splash.style.opacity = '0';
+        document.getElementById('splash').style.opacity = '0';
         setTimeout(() => {
-          splash.style.display = 'none';
-          document.getElementById('main').classList.add('visible');
+          document.getElementById('splash').style.display = 'none';
+          checkName();
         }, 800);
       }, 2000);
     });
 
-    // Username
-    const hello = document.getElementById('hello');
-    const storedName = localStorage.getItem('f1_username');
-
-    if (storedName) {
-      hello.textContent = `Bonjour ${storedName}`;
+    /* --- Gestion du nom --- */
+    function checkName() {
+      const stored = localStorage.getItem('f1_username');
+      if (stored) {
+        startApp(stored);
+      } else {
+        document.getElementById('namePrompt').style.display = 'flex';
+      }
     }
 
-    document.getElementById('saveName').addEventListener('click', () => {
+    document.getElementById('saveName').onclick = () => {
       const name = document.getElementById('username').value.trim();
       if (name) {
         localStorage.setItem('f1_username', name);
-        hello.textContent = `Bonjour ${name}`;
+        document.getElementById('namePrompt').style.display = 'none';
+        startApp(name);
       }
-    });
+    };
 
-    // Détection course en direct (OpenF1)
-    async function checkLiveRace() {
-      const statusText = document.getElementById('liveStatus');
-      const liveButton = document.getElementById('liveButton');
-
-      try {
-        const res = await fetch("https://api.openf1.org/v1/sessions?session_name=Race&session_status=started");
-        const data = await res.json();
-
-        if (data.length > 0) {
-          statusText.textContent = "Une course est en direct !";
-          liveButton.innerHTML = `<a class="btn" href="https://www.formula1.com/en/live" target="_blank">Voir la course en direct</a>`;
-        } else {
-          statusText.textContent = "Aucune course en direct pour le moment";
-          liveButton.innerHTML = "";
-        }
-      } catch (e) {
-        statusText.textContent = "Impossible de vérifier le statut de la course";
-        liveButton.innerHTML = "";
-      }
+    function startApp(name) {
+      document.getElementById('mainUI').style.display = 'block';
+      document.getElementById('hello').textContent = `Bonjour ${name}`;
+      init3D();
     }
 
-    checkLiveRace();
+    /* --- 3D F1 --- */
+    let scene, camera, renderer, car;
 
-    // F1 qui tourne avec la souris (360°)
-    const car = document.getElementById('f1car');
+    function init3D() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 1, 4);
 
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 2);
+      light.position.set(5, 5, 5);
+      scene.add(light);
+
+      const ambient = new THREE.AmbientLight(0xffffff, 1);
+      scene.add(ambient);
+
+      const loader = new THREE.GLTFLoader();
+
+      loader.load(
+        "https://modelviewer.dev/shared-assets/models/Astronaut.glb", // Remplace par ton modèle F1
+        (gltf) => {
+          car = gltf.scene;
+          car.scale.set(1.5, 1.5, 1.5);
+          scene.add(car);
+        }
+      );
+
+      animate();
+    }
+
+    /* --- Rotation avec la souris --- */
     document.addEventListener('mousemove', (e) => {
-      const x = e.clientX;
-      const y = e.clientY;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      if (!car) return;
 
-      // Angle horizontal 0 → 360
-      const angleY = (x / w) * 360;
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
 
-      // Petit tilt vertical -15° → 15°
-      const angleX = ((y / h) - 0.5) * -30;
+      const rotY = (x - 0.5) * Math.PI * 2; // 360°
+      const rotX = (y - 0.5) * -0.6;        // tilt léger
 
-      car.style.transform = `rotateX(${angleX}deg) rotateY(${angleY}deg)`;
+      car.rotation.y = rotY;
+      car.rotation.x = rotX;
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
     });
   </script>
+
 </body>
 </html>
