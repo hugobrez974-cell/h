@@ -5,21 +5,62 @@
   <title>F1 Live Interface</title>
   <style>
     body { margin: 0; background: #000; color: #fff; font-family: Arial; overflow: hidden; }
-    #introText { position: fixed; top: 50%; right: 50%; transform: translate(50%, -50%); text-align: right; font-size: 4rem; opacity: 0; z-index: 5; text-shadow: 0 0 20px red; transition: 1s; }
-    #introText.small { top: 1rem; right: 1rem; transform: translate(0,0); font-size: 1.8rem; text-shadow: 0 0 10px red; }
+
+    #loadingScreen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 20;
+    }
+
+    #loadingLogo {
+      width: 180px; margin-bottom: 20px;
+    }
+
+    #loadingBar {
+      width: 200px; height: 6px; background: #222; border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #loadingFill {
+      width: 0%; height: 100%; background: red; transition: .3s;
+    }
+
+    #introText {
+      position: fixed; top: 50%; right: 50%; transform: translate(50%, -50%);
+      text-align: right; font-size: 4rem; opacity: 0; z-index: 5;
+      text-shadow: 0 0 20px red; transition: 1s;
+    }
+
+    #introText.small {
+      top: 1rem; right: 1rem; transform: translate(0,0);
+      font-size: 1.8rem; text-shadow: 0 0 10px red;
+    }
+
     #timeDisplay { font-size: 1rem; margin-top: .4rem; opacity: 0; transition: 1s; }
-    #resultsBox { position: fixed; top: 1rem; left: 1rem; background: rgba(0,0,0,.6); padding: 1rem 1.4rem; border-left: 3px solid red; border-radius: 4px; font-size: 1rem; line-height: 1.4rem; z-index: 5; display: none; }
+
+    #resultsBox {
+      position: fixed; top: 1rem; left: 1rem; background: rgba(0,0,0,.6);
+      padding: 1rem 1.4rem; border-left: 3px solid red; border-radius: 4px;
+      font-size: 1rem; line-height: 1.4rem; z-index: 5; display: none;
+    }
+
     #resultsBox .title { color: red; font-weight: bold; margin-bottom: .4rem; }
-    #videoContainer { position: fixed; bottom: 1rem; left: 1rem; width: 320px; height: 180px; background: #111; border: 2px solid red; border-radius: 6px; overflow: hidden; z-index: 5; display: none; }
-    #videoContainer video { width: 100%; height: 100%; object-fit: cover; }
-    #liveBadge { position: fixed; bottom: 1rem; left: 1rem; background: red; color: #fff; padding: .3rem .6rem; font-size: .8rem; font-weight: bold; border-radius: 4px; transform: translateY(-200%); opacity: 0; transition: .4s; z-index: 6; }
-    #liveBadge.show { transform: translateY(-230%); opacity: 1; }
-    #choiceBox { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; flex-direction: column; gap: 1rem; z-index: 10; text-align: center; }
-    #choiceBox button { padding: 1rem 2rem; background: #111; border: 2px solid red; color: #fff; font-size: 1.2rem; cursor: pointer; border-radius: 6px; transition: .2s; }
-    #choiceBox button:hover { background: red; }
+
+    #newsBox {
+      position: fixed; bottom: 1rem; left: 1rem; width: 420px; height: 260px;
+      background: #111; border: 2px solid red; border-radius: 6px;
+      overflow: hidden; z-index: 5; display: none;
+    }
+
+    #newsBox iframe { width: 100%; height: 100%; border: none; }
   </style>
 </head>
 <body>
+
+  <div id="loadingScreen">
+    <img id="loadingLogo" src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
+    <div id="loadingBar"><div id="loadingFill"></div></div>
+  </div>
 
   <div id="introText">
     <div id="hello"></div>
@@ -31,49 +72,57 @@
     <div id="resultsList"></div>
   </div>
 
-  <div id="videoContainer">
-    <video id="videoPlayer" autoplay muted loop></video>
-  </div>
-
-  <div id="liveBadge">EN DIRECT</div>
-
-  <div id="choiceBox">
-    <button id="btnAlt">▶ Vidéo F1 alternative</button>
-    <button id="btnWall">▶ Wallpaper animé</button>
+  <div id="newsBox">
+    <iframe src="https://www.formula1.com/en/latest.html"></iframe>
   </div>
 
   <script>
-    const intro = document.getElementById("introText");
-    const hello = document.getElementById("hello");
-    const timeDisplay = document.getElementById("timeDisplay");
-    const name = "Hugo";
-    hello.textContent = "Bonjour " + name;
+    const loadingFill = document.getElementById("loadingFill");
+    const loadingScreen = document.getElementById("loadingScreen");
 
-    setTimeout(() => {
-      intro.style.opacity = "1";
+    let p = 0;
+    const loadInterval = setInterval(() => {
+      p += 10;
+      loadingFill.style.width = p + "%";
+      if (p >= 100) {
+        clearInterval(loadInterval);
+        loadingScreen.style.opacity = "0";
+        setTimeout(() => loadingScreen.style.display = "none", 600);
+        startIntro();
+      }
+    }, 200);
+
+    function startIntro() {
+      const intro = document.getElementById("introText");
+      const hello = document.getElementById("hello");
+      const timeDisplay = document.getElementById("timeDisplay");
+      hello.textContent = "Bonjour Hugo";
+
       setTimeout(() => {
-        intro.classList.add("small");
+        intro.style.opacity = "1";
         setTimeout(() => {
-          updateTime();
-          timeDisplay.style.opacity = "1";
-          showInterface();
-          startLiveResults();
-        }, 600);
-      }, 1500);
-    }, 300);
+          intro.classList.add("small");
+          setTimeout(() => {
+            updateTime();
+            timeDisplay.style.opacity = "1";
+            showInterface();
+            startLiveResults();
+          }, 600);
+        }, 1500);
+      }, 300);
+    }
 
     function updateTime() {
       const now = new Date();
       const h = now.getHours().toString().padStart(2, "0");
       const m = now.getMinutes().toString().padStart(2, "0");
-      timeDisplay.textContent = `${h}:${m} — Heure locale`;
+      document.getElementById("timeDisplay").textContent = `${h}:${m} — Heure locale`;
     }
     setInterval(updateTime, 10000);
 
     function showInterface() {
       document.getElementById("resultsBox").style.display = "block";
-      document.getElementById("videoContainer").style.display = "block";
-      document.getElementById("choiceBox").style.display = "flex";
+      document.getElementById("newsBox").style.display = "block";
     }
 
     async function startLiveResults() {
@@ -85,7 +134,6 @@
       const url = "https://ergast.com/api/f1/current/last/results.json";
       const res = await fetch(url);
       const data = await res.json();
-
       const races = data.MRData.RaceTable.Races;
       if (!races.length) return;
 
@@ -95,32 +143,10 @@
 
       results.forEach(r => {
         const div = document.createElement("div");
-        div.textContent = `${r.position}. ${r.Driver.familyName} — +${r.Time ? r.Time.time : r.status}`;
+        div.textContent = `${r.position}. ${r.Driver.familyName} — ${r.Time ? r.Time.time : r.status}`;
         list.appendChild(div);
       });
     }
-
-    const videoPlayer = document.getElementById("videoPlayer");
-    const liveBadge = document.getElementById("liveBadge");
-    const choiceBox = document.getElementById("choiceBox");
-
-    const f1tvDisponible = false;
-    const courseEnDirect = false;
-
-    if (f1tvDisponible && courseEnDirect) {
-      videoPlayer.src = "https://your-live-stream-url.mp4";
-      liveBadge.classList.add("show");
-    }
-
-    document.getElementById("btnAlt").onclick = () => {
-      videoPlayer.src = "https://cdn.pixabay.com/vimeo/458749399/f1-42758.mp4?width=1280";
-      choiceBox.style.display = "none";
-    };
-
-    document.getElementById("btnWall").onclick = () => {
-      videoPlayer.src = "https://cdn.pixabay.com/vimeo/458749399/f1-42758.mp4?width=1280";
-      choiceBox.style.display = "none";
-    };
   </script>
 
 </body>
