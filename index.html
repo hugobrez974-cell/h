@@ -51,6 +51,7 @@
       font-size: 1rem;
       line-height: 1.4rem;
       z-index: 5;
+      display: none;
     }
 
     #resultsBox .title {
@@ -70,6 +71,7 @@
       border-radius: 6px;
       overflow: hidden;
       z-index: 5;
+      display: none;
     }
 
     #videoContainer video {
@@ -165,6 +167,7 @@
         setTimeout(() => {
           updateTime();
           timeDisplay.style.opacity = "1";
+          showInterface();
         }, 600);
       }, 1500);
     }, 300);
@@ -176,6 +179,12 @@
       timeDisplay.textContent = `${h}:${m} — Heure locale`;
     }
     setInterval(updateTime, 10000);
+
+    function showInterface() {
+      document.getElementById("resultsBox").style.display = "block";
+      document.getElementById("videoContainer").style.display = "block";
+      document.getElementById("choiceBox").style.display = "flex";
+    }
 
     const results = [
       { name: "Verstappen", gap: "+0.0" },
@@ -201,9 +210,6 @@
     if (f1tvDisponible && courseEnDirect) {
       videoPlayer.src = "https://your-live-stream-url.mp4";
       liveBadge.classList.add("show");
-    } else {
-      choiceBox.style.display = "flex";
-      liveBadge.classList.remove("show");
     }
 
     document.getElementById("btnAlt").onclick = () => {
