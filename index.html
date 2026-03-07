@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>F1 Interactive 3D</title>
+  <title>F1 3D – 360°</title>
   <style>
     body {
       margin: 0;
@@ -31,7 +31,14 @@
       filter: drop-shadow(0 0 15px red);
     }
 
-    /* Nom utilisateur */
+    #splash span {
+      color: #ccc;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+    }
+
+    /* Demande du nom */
     #namePrompt {
       position: fixed;
       inset: 0;
@@ -63,12 +70,15 @@
       text-transform: uppercase;
     }
 
+    /* Bonjour ... */
     #mainUI {
       position: fixed;
       top: 1rem;
       left: 1rem;
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       display: none;
+      z-index: 5;
+      text-shadow: 0 0 10px red;
     }
 
     canvas {
@@ -80,8 +90,8 @@
 
   <!-- Splash -->
   <div id="splash">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
-    <span>Chargement...</span>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg" alt="F1 Logo">
+    <span>CHARGEMENT DU PADDOCK...</span>
   </div>
 
   <!-- Demande du nom -->
@@ -91,12 +101,12 @@
     <button id="saveName">Valider</button>
   </div>
 
-  <!-- UI principale -->
+  <!-- Bonjour ... -->
   <div id="mainUI">
     <span id="hello"></span>
   </div>
 
-  <!-- Three.js -->
+  <!-- Three.js depuis CDN (rien à installer) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.152/examples/js/loaders/GLTFLoader.js"></script>
 
@@ -104,9 +114,10 @@
     /* --- Splash --- */
     window.addEventListener('load', () => {
       setTimeout(() => {
-        document.getElementById('splash').style.opacity = '0';
+        const splash = document.getElementById('splash');
+        splash.style.opacity = '0';
         setTimeout(() => {
-          document.getElementById('splash').style.display = 'none';
+          splash.style.display = 'none';
           checkName();
         }, 800);
       }, 2000);
@@ -142,35 +153,49 @@
 
     function init3D() {
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 1, 4);
+      scene.background = new THREE.Color(0x000000);
+
+      camera = new THREE.PerspectiveCamera(
+        50,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.set(0, 1.2, 5);
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
       document.body.appendChild(renderer.domElement);
 
       const light = new THREE.DirectionalLight(0xffffff, 2);
-      light.position.set(5, 5, 5);
+      light.position.set(5, 10, 5);
       scene.add(light);
 
-      const ambient = new THREE.AmbientLight(0xffffff, 1);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.6);
       scene.add(ambient);
 
       const loader = new THREE.GLTFLoader();
 
+      // Modèle F1 3D en ligne (GLB)
       loader.load(
-        "https://modelviewer.dev/shared-assets/models/Astronaut.glb", // Remplace par ton modèle F1
+        "https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/FormulaCar/glTF-Binary/FormulaCar.glb",
         (gltf) => {
           car = gltf.scene;
-          car.scale.set(1.5, 1.5, 1.5);
+          car.scale.set(0.9, 0.9, 0.9);
+          car.rotation.y = Math.PI; // face caméra
           scene.add(car);
+        },
+        undefined,
+        (err) => {
+          console.error("Erreur chargement modèle :", err);
         }
       );
 
       animate();
     }
 
-    /* --- Rotation avec la souris --- */
+    /* --- Rotation 360° avec la souris --- */
     document.addEventListener('mousemove', (e) => {
       if (!car) return;
 
@@ -178,7 +203,7 @@
       const y = e.clientY / window.innerHeight;
 
       const rotY = (x - 0.5) * Math.PI * 2; // 360°
-      const rotX = (y - 0.5) * -0.6;        // tilt léger
+      const rotX = (y - 0.5) * -0.4;        // tilt léger
 
       car.rotation.y = rotY;
       car.rotation.x = rotX;
@@ -190,6 +215,7 @@
     }
 
     window.addEventListener('resize', () => {
+      if (!camera || !renderer) return;
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
