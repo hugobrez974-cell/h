@@ -6,6 +6,16 @@
   <style>
     body { margin: 0; background: #000; color: #fff; font-family: Arial; overflow: hidden; }
 
+    #bgLogo {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      opacity: 0.08;
+      z-index: 0;
+      pointer-events: none;
+    }
+
     #loadingScreen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: #000; display: flex; flex-direction: column;
@@ -37,14 +47,8 @@
 
     #resultsBox .title { color: red; font-weight: bold; margin-bottom: .4rem; }
 
-    #newsLeft {
-      position: fixed; bottom: 1rem; left: 1rem; width: 420px; height: 260px;
-      background: #111; border: 2px solid red; border-radius: 6px;
-      overflow: hidden; z-index: 5; display: none;
-    }
-
     #newsRight {
-      position: fixed; bottom: 1rem; left: 450px; width: 420px; height: 260px;
+      position: fixed; bottom: 1rem; left: 1rem; width: 420px; height: 260px;
       background: #111; border: 2px solid red; border-radius: 6px;
       overflow: hidden; z-index: 5; display: none;
     }
@@ -53,6 +57,8 @@
   </style>
 </head>
 <body>
+
+  <img id="bgLogo" src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
 
   <div id="loadingScreen">
     <img id="loadingLogo" src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg">
@@ -67,10 +73,6 @@
   <div id="resultsBox">
     <div class="title">Résultats</div>
     <div id="resultsList"></div>
-  </div>
-
-  <div id="newsLeft">
-    <iframe src="https://www.formula1.com/en/latest.html"></iframe>
   </div>
 
   <div id="newsRight">
@@ -123,7 +125,6 @@
 
     function showInterface() {
       document.getElementById("resultsBox").style.display = "block";
-      document.getElementById("newsLeft").style.display = "block";
       document.getElementById("newsRight").style.display = "block";
     }
 
