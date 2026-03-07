@@ -168,6 +168,7 @@
           updateTime();
           timeDisplay.style.opacity = "1";
           showInterface();
+          startLiveResults();
         }, 600);
       }, 1500);
     }, 300);
@@ -186,19 +187,39 @@
       document.getElementById("choiceBox").style.display = "flex";
     }
 
-    const results = [
-      { name: "Verstappen", gap: "+0.0" },
-      { name: "Leclerc", gap: "+1.2" },
-      { name: "Norris", gap: "+2.8" },
-      { name: "Hamilton", gap: "+4.1" }
-    ];
+    function startLiveResults() {
+      updateResults();
+      setInterval(updateResults, 5000);
+    }
 
-    const resultsList = document.getElementById("resultsList");
-    results.forEach((r, i) => {
-      const line = document.createElement("div");
-      line.textContent = `${i+1}. ${r.name} — ${r.gap}`;
-      resultsList.appendChild(line);
-    });
+    function updateResults() {
+      const drivers = [
+        "Verstappen",
+        "Leclerc",
+        "Norris",
+        "Hamilton",
+        "Sainz",
+        "Russell",
+        "Piastri",
+        "Alonso"
+      ];
+
+      const results = drivers
+        .map(name => ({
+          name,
+          gap: "+" + (Math.random() * 10).toFixed(1)
+        }))
+        .sort((a, b) => parseFloat(a.gap) - parseFloat(b.gap));
+
+      const resultsList = document.getElementById("resultsList");
+      resultsList.innerHTML = "";
+
+      results.forEach((r, i) => {
+        const line = document.createElement("div");
+        line.textContent = `${i + 1}. ${r.name} — ${r.gap}`;
+        resultsList.appendChild(line);
+      });
+    }
 
     const videoPlayer = document.getElementById("videoPlayer");
     const liveBadge = document.getElementById("liveBadge");
