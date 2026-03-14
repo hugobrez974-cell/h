@@ -5,10 +5,10 @@ const path = require("path");
 const Stripe = require("stripe");
 
 // ⚠️ METS ICI TA CLÉ SECRÈTE STRIPE (test ou live)
-const stripe = Stripe("sk_test_51TAqSC5LDZ8pwIL4FOSDIhzeXyIZJdUUgR8wC6PbcLl6I2DVXwnokx96BsikamxIOQwzYBCJJ3XSr0x9MuhaEN1u00yzPGt9xi");
+const stripe = Stripe("pk_test_51TAqSC5LDZ8pwIL4Acg3gWcVHAL2INy12T1q6MEK7eb0HS0SYrvzirZtBIwkuTy8XSvIloFYQE1JitUGYvGUM2ng00M2ALtMIC");
 
 // ⚠️ METS ICI TON SECRET DE WEBHOOK STRIPE
-const STRIPE_WEBHOOK_SECRET = "whsec_tEBF83u6ZzAyd82K7pVTDvMbmocGXSzn";
+const STRIPE_WEBHOOK_SECRET = "sk_test_51TAqSC5LDZ8pwIL4FOSDIhzeXyIZJdUUgR8wC6PbcLl6I2DVXwnokx96BsikamxIOQwzYBCJJ3XSr0x9MuhaEN1u00yzPGt9xi";
 
 const app = express();
 
