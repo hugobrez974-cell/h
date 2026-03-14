@@ -5,7 +5,7 @@ const path = require("path");
 const Stripe = require("stripe");
 
 const stripe = Stripe("sk_test_51TAqSC5LDZ8pwIL4FOSDIhzeXyIZJdUUgR8wC6PbcLl6I2DVXwnokx96BsikamxIOQwzYBCJJ3XSr0x9MuhaEN1u00yzPGt9xi");
-const STRIPE_WEBHOOK_SECRET = whsec_tEBF83u6ZzAyd82K7pVTDvMbmocGXSzn ;
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
 const app = express();
 
