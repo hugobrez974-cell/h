@@ -2,7 +2,6 @@ const express = require("express");
 const Database = require("better-sqlite3");
 const fs = require("fs");
 const path = require("path");
-const nodemailer = require("nodemailer");
 const Stripe = require("stripe");
 
 // TA CLÉ SECRÈTE STRIPE
@@ -18,19 +17,17 @@ if (!fs.existsSync(icalDir)) fs.mkdirSync(icalDir);
 // Base SQLite
 const db = new Database("database.sqlite");
 
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS reservations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nom TEXT,
-      email TEXT,
-      bungalow TEXT,
-      debut TEXT,
-      fin TEXT,
-      created_at TEXT
-    )
-  `);
-});
+db.exec(`
+  CREATE TABLE IF NOT EXISTS reservations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nom TEXT,
+    email TEXT,
+    bungalow TEXT,
+    debut TEXT,
+    fin TEXT,
+    created_at TEXT
+  )
+`);
 
 // Format iCal
 function formatICS(dateStr) {
@@ -40,21 +37,19 @@ function formatICS(dateStr) {
 
 // Mise à jour du fichier iCal
 function updateICS(bungalow) {
-  db.all(
-    "SELECT * FROM reservations WHERE bungalow = ? ORDER BY debut",
-    [bungalow],
-    (err, rows) => {
-      if (err) return;
+  const rows = db.prepare(
+    "SELECT * FROM reservations WHERE bungalow = ? ORDER BY debut"
+  ).all(bungalow);
 
-      let ics = `BEGIN:VCALENDAR
+  let ics = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Les Bungalows//FR
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 `;
 
-      rows.forEach((r) => {
-        ics += `
+  rows.forEach((r) => {
+    ics += `
 BEGIN:VEVENT
 UID:${r.id}@lesbungalows
 DTSTAMP:${formatICS(r.created_at)}
@@ -64,69 +59,69 @@ SUMMARY:Réservation - ${r.bungalow}
 DESCRIPTION:Réservé par ${r.nom} (${r.email})
 END:VEVENT
 `;
-      });
+  });
 
-      ics += "END:VCALENDAR";
+  ics += "END:VCALENDAR";
 
-      fs.writeFileSync(path.join(icalDir, `${bungalow}.ics`), ics);
-    }
-  );
+  fs.writeFileSync(path.join(icalDir, `${bungalow}.ics`), ics);
 }
 
 // Vérification des disponibilités
-function isAvailable(bungalow, debut, fin, cb) {
-  db.all(
+function isAvailable(bungalow, debut, fin) {
+  const rows = db.prepare(
     `SELECT * FROM reservations
      WHERE bungalow = ?
-     AND (debut < ? AND fin > ?)`,
-    [bungalow, fin, debut],
-    (err, rows) => {
-      if (err) return cb(err);
-      cb(null, rows.length === 0);
-    }
-  );
+     AND (debut < ? AND fin > ?)`
+  ).all(bungalow, fin, debut);
+
+  return rows.length === 0;
 }
 
 // API : créer une réservation
 app.post("/api/reserver", (req, res) => {
   const { nom, email, bungalow, debut, fin } = req.body;
 
-  isAvailable(bungalow, debut, fin, (err, ok) => {
-    if (!ok) return res.status(400).json({ error: "Dates déjà réservées" });
+  if (!isAvailable(bungalow, debut, fin)) {
+    return res.status(400).json({ error: "Dates déjà réservées" });
+  }
 
-    const createdAt = new Date().toISOString();
+  const createdAt = new Date().toISOString();
 
-try {
-  const stmt = db.prepare("INSERT INTO reservations (...) VALUES (?, ?, ?, ?)");
-  stmt.run(param1, param2, param3, param4);
-  res.json({ success: true });
-} catch (err) {
-  res.json({ error: err.message });
-}
-      }
+  try {
+    const stmt = db.prepare(
+      "INSERT INTO reservations (nom, email, bungalow, debut, fin, created_at) VALUES (?, ?, ?, ?, ?, ?)"
     );
-  });
+    stmt.run(nom, email, bungalow, debut, fin, createdAt);
+
+    updateICS(bungalow);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.json({ error: err.message });
+  }
 });
 
 // API : disponibilités
 app.get("/api/disponibilites", (req, res) => {
   const { bungalow } = req.query;
 
-  db.all(
-    "SELECT debut, fin FROM reservations WHERE bungalow = ? ORDER BY debut",
-    [bungalow],
-    (err, rows) => res.json(rows)
-  );
+  const rows = db.prepare(
+    "SELECT debut, fin FROM reservations WHERE bungalow = ? ORDER BY debut"
+  ).all(bungalow);
+
+  res.json(rows);
 });
 
 // API : liste admin
 app.get("/api/reservations", (req, res) => {
-  db.all("SELECT * FROM reservations ORDER BY created_at DESC", (err, rows) => {
-    res.json(rows);
-  });
+  const rows = db.prepare(
+    "SELECT * FROM reservations ORDER BY created_at DESC"
+  ).all();
+
+  res.json(rows);
 });
 
-// API : paiement Stripe (150$ par nuit)
+// API : paiement Stripe (150€ par nuit)
 app.post("/api/payer", async (req, res) => {
   const { bungalow, debut, fin } = req.body;
 
@@ -134,7 +129,7 @@ app.post("/api/payer", async (req, res) => {
   const d2 = new Date(fin);
   const nuits = (d2 - d1) / (1000 * 60 * 60 * 24);
 
-  const prix = nuits * 150; // 150$ par nuit
+  const prix = nuits * 150;
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -152,12 +147,11 @@ app.post("/api/payer", async (req, res) => {
           quantity: 1
         }
       ],
-      success_url: "http://localhost:3000/reservation-success.html",
-      cancel_url: "http://localhost:3000/reservation-cancel.html"
+      success_url: "https://h-ptt9.onrender.com/reservation-success.html",
+      cancel_url: "https://h-ptt9.onrender.com/reservation-cancel.html"
     });
 
     res.json({ url: session.url });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur Stripe" });
@@ -170,4 +164,5 @@ app.use("/ical", express.static(icalDir));
 // Serveur frontend
 app.use("/", express.static(path.join(__dirname, "..", "frontend")));
 
-app.listen(3000, () => console.log("Serveur lancé sur http://localhost:3000"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log("Serveur lancé sur port " + PORT));
