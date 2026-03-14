@@ -175,12 +175,15 @@ async function payer() {
   const dDebut = buildDate(anneeDebut.value, moisDebut.value, jourDebut.value);
   const dFin   = buildDate(anneeFin.value, moisFin.value, jourFin.value);
   const prix = calculerPrix();
+
   if (prix <= 0) return alert("Dates invalides");
 
   const res = await fetch("/api/payer", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({
+      nom: nom.value,
+      email: email.value,
       bungalow: bungalow.value,
       debut: dDebut,
       fin: dFin
