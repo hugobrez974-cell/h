@@ -2,196 +2,52 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Les Bungalows – Séjour nature & détente</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Nunito:wght@300;400;600&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Les Bungalows – Accueil</title>
 
   <style>
-    :root {
-      --bois: #5A4633;
-      --sable: #F4E9D8;
-      --vert: #A7C4A0;
-      --blanc: #d6c7a0;
-      --or: #D9B77A;
-      --texte: #3A2F25;
-
-      /* Corrections */
-      --white: #ffffff;
-      --panel: #5a4633;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
-      font-family: 'Nunito', sans-serif;
-      background: var(--sable);
-      color: var(--texte);
-      line-height: 1.6;
-    }
-
-    /* FORMULAIRE */
-    .contact-form {
-      background:#F4E9D8;
-      border:1px solid rgba(0,200,255,0.08);
-      padding:40px;
-      margin-top:40px;
-    }
-    .contact-form h3 {
-      font-family:'Orbitron',sans-serif;
-      font-size:14px;
-      letter-spacing:3px;
-      color:var(--bois);
-      margin-bottom:24px;
-    }
-    .cf-grid {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:16px;
-    }
-    @media(max-width:600px){ .cf-grid{ grid-template-columns:1fr; } }
-    .cf-full { grid-column:1/-1; }
-
-    .cf-input,.cf-textarea,.cf-select {
-      width:100%;
-      background:var(--panel);
-      border:1px solid rgba(255,255,255,0.08);
-      color:var(--white);
-      padding:12px 16px;
-      font-family:'Rajdhani',sans-serif;
-      font-size:14px;
-      outline:none;
-      transition:border-color 0.3s;
-      letter-spacing:1px;
-    }
-
-    .cf-input:focus,.cf-textarea:focus,.cf-select:focus {
-      border-color:rgba(0,200,255,0.4);
-    }
-
-    .cf-textarea { resize:vertical; min-height:120px; }
-
-    .cf-label {
-      font-size:10px;
-      letter-spacing:3px;
-      text-transform:uppercase;
-      color:var(--bois);
-      margin-bottom:6px;
-      display:block;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      color: #333;
+      text-align: center;
     }
 
     header {
-      position: sticky;
-      top: 0;
-      background: rgba(255,255,255,0.9);
-      backdrop-filter: blur(10px);
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #e5d8c8;
-      z-index: 10;
-    }
-
-    .logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.4rem;
-      color: var(--bois);
-      letter-spacing: 0.05em;
-    }
-
-    nav a {
-      margin-left: 1.5rem;
-      text-decoration: none;
-      color: var(--bois);
-      font-weight: 600;
-    }
-
-    nav a:hover { color: var(--vert); }
-
-    .hero {
-      background: url('https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
-      height: 75vh;
-      display: flex;
-      align-items: center;
-      padding: 3rem;
+      background: #009688;
       color: white;
-      position: relative;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
     }
 
-    .hero::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.35);
-    }
-
-    .hero-content {
-      position: relative;
-      max-width: 600px;
-    }
-
-    .hero h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 3rem;
-      margin-bottom: 1rem;
-    }
-
-    .hero p {
-      font-size: 1.2rem;
-      margin-bottom: 1.5rem;
+    .container {
+      padding: 20px;
     }
 
     .btn {
-      display: inline-block;
-      padding: 0.8rem 1.6rem;
-      border-radius: 999px;
+      display: block;
+      width: 90%;
+      margin: 15px auto;
+      padding: 15px;
+      background: #009688;
+      color: white;
       text-decoration: none;
-      font-weight: 600;
-      margin-right: 1rem;
+      font-size: 18px;
+      border-radius: 10px;
+      transition: 0.2s;
     }
 
-    .btn-primary { background: var(--vert); color: var(--bois); }
-    .btn-outline { border: 2px solid var(--blanc); color: var(--blanc); }
-
-    .section {
-      padding: 4rem 2rem;
-      max-width: 1100px;
-      margin: auto;
+    .btn:hover {
+      background: #00796b;
     }
 
-    .section h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 2.2rem;
-      color: var(--bois);
-      margin-bottom: 1rem;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      align-items: center;
-    }
-
-    .card {
-      background: var(--blanc);
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
-    footer {
-      text-align: center;
-      padding: 2rem;
-      background: var(--bois);
-      color: var(--blanc);
-      margin-top: 3rem;
-    }
-
-    @media (max-width: 800px) {
-      .grid-2 { grid-template-columns: 1fr; }
-      nav { display: none; }
+    /* Mobile-first */
+    @media (min-width: 600px) {
+      .btn {
+        width: 300px;
+      }
     }
   </style>
 </head>
@@ -199,95 +55,19 @@
 <body>
 
 <header>
-  <div class="logo">Les Bungalows</div>
-  <nav>
-    <a href="#bungalows">Bungalows</a>
-    <a href="Dispo.html">Disponibilités</a>
-    <a href="reservation.html">Réserver</a>
-    <a href="#contact">Contact</a>
-  </nav>
+  Les Bungalows
 </header>
 
-<section class="hero">
-  <div class="hero-content">
-    <h1>Un séjour nature, calme et chaleureux</h1>
-    <p>Deux bungalows en bois, nichés dans un cadre tropical, pour une expérience authentique et reposante.</p>
-    <a href="reservation.html" class="btn btn-primary">Voir les disponibilités</a>
-    <a href="#bungalows" class="btn btn-outline">Découvrir les bungalows</a>
-  </div>
-</section>
+<div class="container">
 
-<section class="section" id="bungalows">
-  <h2>Nos Bungalows</h2>
-  <div class="grid-2">
-    <div>
-      <p>Chaque bungalow a été conçu pour offrir confort, intimité et immersion dans la nature. Bois, matières naturelles, lumière douce… tout est pensé pour un séjour chaleureux.</p>
-      <p>Idéal pour couples, voyageurs en solo ou petites familles.</p>
-    </div>
-    <img src="https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&w=900&q=80" style="width:100%; border-radius:1rem;">
-  </div>
-</section>
+  <h2>Bienvenue</h2>
+  <p>Choisissez une action :</p>
 
-<section class="section" id="contact">
-  <div class="contact-form">
-    <h3>CONTACT</h3>
-    <div class="cf-grid">
-      <div>
-        <label class="cf-label">Nom</label>
-        <input id="cf-nom" class="cf-input" placeholder="Votre nom">
-      </div>
+  <a class="btn" href="/reservation.html">Faire une réservation</a>
+  <a class="btn" href="/Dispo.html">Voir les disponibilités</a>
+  <a class="btn" href="/admin.html">Espace administrateur</a>
 
-      <div>
-        <label class="cf-label">Email</label>
-        <input id="cf-email" class="cf-input" placeholder="Votre email">
-      </div>
-
-      <div class="cf-full">
-        <label class="cf-label">Sujet</label>
-        <select id="cf-sujet" class="cf-select">
-          <option value="">Choisir…</option>
-          <option>Réservation</option>
-          <option>Disponibilités</option>
-          <option>Autre</option>
-        </select>
-      </div>
-
-      <div class="cf-full">
-        <label class="cf-label">Message</label>
-        <textarea id="cf-message" class="cf-textarea" placeholder="Votre message"></textarea>
-      </div>
-    </div>
-
-    <button onclick="sendContact()" class="btn btn-primary" style="margin-top:20px;">Envoyer</button>
-  </div>
-</section>
-
-<footer>
-  © <span id="year"></span> Les Bungalows – Tous droits réservés
-</footer>
-
-<script>
-function sendContact(){
-  const nom=document.getElementById('cf-nom')?.value.trim();
-  const email=document.getElementById('cf-email')?.value.trim();
-  const sujet=document.getElementById('cf-sujet')?.value;
-  const msg=document.getElementById('cf-message')?.value.trim();
-
-  if(!nom){ alert('Entrez votre nom'); return; }
-  if(!email?.includes('@')){ alert('Email invalide'); return; }
-  if(!sujet){ alert('Choisissez un sujet'); return; }
-  if(!msg){ alert('Écrivez votre message'); return; }
-
-  ['cf-nom','cf-email','cf-sujet','cf-message'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.value='';
-  });
-
-  alert('Message envoyé ! Réponse sous 48h.');
-}
-
-document.getElementById('year').textContent = new Date().getFullYear();
-</script>
+</div>
 
 </body>
 </html>
