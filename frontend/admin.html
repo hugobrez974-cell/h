@@ -44,6 +44,24 @@ if (localStorage.getItem("admin") !== "ok") {
 .btn-retour:hover {
   background:#8fb48a;
 }
+      async function deleteResa(id) {
+  if (!confirm("Supprimer cette réservation ?")) return;
+
+  const res = await fetch("/api/delete-reservation", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    alert("Réservation supprimée");
+    loadReservations(); // recharge la liste
+  } else {
+    alert("Erreur lors de la suppression");
+  }
+}
   </style>
 </head>
 <body>
