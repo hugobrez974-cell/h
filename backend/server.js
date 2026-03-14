@@ -8,7 +8,7 @@ const Stripe = require("stripe");
 const stripe = Stripe("sk_test_51TAqSZ4SBfYvToTOjcncvWernj51qcj4oXlnvwTtmbuH5e0DxKFodxVWLQhRXJpHs8AI1LNDtqMxCi3C0MwhrqoV00Iblghn2Z");
 
 // ⚠️ METS ICI TON SECRET DE WEBHOOK STRIPE
-const STRIPE_WEBHOOK_SECRET = "pk_test_51TAqSZ4SBfYvToTOf9YdBFDryqy12bOw11wclIwzIj6LRS7y0xcFesrx1BVCtulYFvJYvpHSLnXJ4aBIFcEazH6b003NgmuphV";
+const STRIPE_WEBHOOK_SECRET = "whsec_tEBF83u6ZzAyd82K7pVTDvMbmocGXSzn";
 
 const app = express();
 
