@@ -8,34 +8,46 @@
   <style>
     body {
       margin: 0;
+      padding: 0;
       font-family: Arial, sans-serif;
       background: #f2f2f2;
       color: #333;
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
     header {
       background: #009688;
       color: white;
       padding: 20px;
-      font-size: 24px;
+      text-align: center;
+      font-size: 22px;
       font-weight: bold;
     }
 
-    .container {
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       padding: 20px;
+      text-align: center;
     }
 
     .btn {
-      display: block;
-      width: 90%;
-      margin: 15px auto;
+      width: 100%;
+      max-width: 350px;
       padding: 15px;
+      margin: 12px 0;
       background: #009688;
       color: white;
       text-decoration: none;
       font-size: 18px;
       border-radius: 10px;
+      display: block;
+      text-align: center;
       transition: 0.2s;
     }
 
@@ -43,11 +55,11 @@
       background: #00796b;
     }
 
-    /* Mobile-first */
-    @media (min-width: 600px) {
-      .btn {
-        width: 300px;
-      }
+    footer {
+      text-align: center;
+      padding: 15px;
+      font-size: 14px;
+      color: #666;
     }
   </style>
 </head>
@@ -58,16 +70,18 @@
   Les Bungalows
 </header>
 
-<div class="container">
-
+<div class="content">
   <h2>Bienvenue</h2>
   <p>Choisissez une action :</p>
 
   <a class="btn" href="/reservation.html">Faire une réservation</a>
   <a class="btn" href="/Dispo.html">Voir les disponibilités</a>
   <a class="btn" href="/admin.html">Espace administrateur</a>
-
 </div>
+
+<footer>
+  © Les Bungalows – 2025
+</footer>
 
 </body>
 </html>
