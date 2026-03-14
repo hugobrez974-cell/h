@@ -4,8 +4,8 @@ const fs = require("fs");
 const path = require("path");
 const Stripe = require("stripe");
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const stripe = Stripe("sk_test_51TAqSC5LDZ8pwIL4FOSDIhzeXyIZJdUUgR8wC6PbcLl6I2DVXwnokx96BsikamxIOQwzYBCJJ3XSr0x9MuhaEN1u00yzPGt9xi");
+const STRIPE_WEBHOOK_SECRET = whsec_tEBF83u6ZzAyd82K7pVTDvMbmocGXSzn ;
 
 const app = express();
 
