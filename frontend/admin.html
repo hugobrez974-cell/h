@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
-    <script>
+<script>
 if (localStorage.getItem("admin") !== "ok") {
   window.location.href = "admin-login.html";
 }
@@ -16,56 +16,40 @@ if (localStorage.getItem("admin") !== "ok") {
     th,td{border:1px solid #ddd;padding:8px;font-size:14px;}
     th{background:#eee;}
     tr:nth-child(even){background:#fafafa;}
+
     .btn-retour {
-  display:inline-block;
-  padding:0.6rem 1.2rem;
-  background:var(--vert);
-  color:var(--bois);
-  border:none;
-  border-radius:999px;
-  font-weight:600;
-  cursor:pointer;
-  margin-bottom:1rem;
-}
-      .btn-delete {
-  background: #8b3a3a;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.2s;
-}
+      display:inline-block;
+      padding:0.6rem 1.2rem;
+      background:#A7C4A0;
+      color:#5A4633;
+      border:none;
+      border-radius:999px;
+      font-weight:600;
+      cursor:pointer;
+      margin-bottom:1rem;
+      text-decoration:none;
+    }
+    .btn-retour:hover { background:#8fb48a; }
 
-.btn-delete:hover {
-  background: #6d2d2d;
-}
-.btn-retour:hover {
-  background:#8fb48a;
-}
-      async function deleteResa(id) {
-  if (!confirm("Supprimer cette réservation ?")) return;
-
-  const res = await fetch("/api/delete-reservation", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id })
-  });
-
-  const data = await res.json();
-
-  if (data.success) {
-    alert("Réservation supprimée");
-    loadReservations(); // recharge la liste
-  } else {
-    alert("Erreur lors de la suppression");
-  }
-}
+    .btn-delete {
+      background: #8b3a3a;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    .btn-delete:hover {
+      background: #6d2d2d;
+    }
   </style>
 </head>
+
 <body>
-    <a href="main.html" class="btn-retour">← Retour</a>
+
+<a href="main.html" class="btn-retour">← Retour</a>
 
 <h1>Réservations</h1>
 
@@ -79,6 +63,7 @@ if (localStorage.getItem("admin") !== "ok") {
       <th>Début</th>
       <th>Fin</th>
       <th>Créé le</th>
+      <th>Action</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -90,8 +75,9 @@ async function loadResa(){
   const data = await res.json();
   const tbody = document.querySelector("#resa-table tbody");
   tbody.innerHTML = "";
-  data.forEach(r=>{
-    const tr=document.createElement("tr");
+
+  data.forEach(r => {
+    const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${r.id}</td>
       <td>${r.nom}</td>
@@ -100,11 +86,31 @@ async function loadResa(){
       <td>${r.debut}</td>
       <td>${r.fin}</td>
       <td>${r.created_at}</td>
-      <button class="btn-delete" onclick="deleteResa(${r.id})">Supprimer</button>
+      <td><button class="btn-delete" onclick="deleteResa(${r.id})">Supprimer</button></td>
     `;
     tbody.appendChild(tr);
   });
 }
+
+async function deleteResa(id) {
+  if (!confirm("Supprimer cette réservation ?")) return;
+
+  const res = await fetch("/api/delete-reservation", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id })
+  });
+
+  const data = await res.json();
+
+  if (data.success) {
+    alert("Réservation supprimée");
+    loadResa();
+  } else {
+    alert("Erreur lors de la suppression");
+  }
+}
+
 loadResa();
 </script>
 
