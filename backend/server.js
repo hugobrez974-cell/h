@@ -217,5 +217,26 @@ app.use("/ical", express.static(icalDir));
 // Serveur frontend
 app.use("/", express.static(path.join(__dirname, "..", "frontend")));
 
+app.post("/api/delete-reservation", (req, res) => {
+  const { id } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ error: "ID manquant" });
+  }
+
+  try {
+    const resa = db.prepare("SELECT bungalow FROM reservations WHERE id = ?").get(id);
+
+    db.prepare("DELETE FROM reservations WHERE id = ?").run(id);
+
+    if (resa) updateICS(resa.bungalow);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Erreur suppression :", err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Serveur lancé sur port " + PORT));
