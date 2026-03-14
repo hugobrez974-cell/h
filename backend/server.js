@@ -4,17 +4,14 @@ const fs = require("fs");
 const path = require("path");
 const Stripe = require("stripe");
 
-// ⚠️ METS ICI TA CLÉ SECRÈTE STRIPE (test ou live)
-const stripe = Stripe("pk_test_51TAqSC5LDZ8pwIL4Acg3gWcVHAL2INy12T1q6MEK7eb0HS0SYrvzirZtBIwkuTy8XSvIloFYQE1JitUGYvGUM2ng00M2ALtMIC");
-
-// ⚠️ METS ICI TON SECRET DE WEBHOOK STRIPE
-const STRIPE_WEBHOOK_SECRET = "sk_test_51TAqSC5LDZ8pwIL4FOSDIhzeXyIZJdUUgR8wC6PbcLl6I2DVXwnokx96BsikamxIOQwzYBCJJ3XSr0x9MuhaEN1u00yzPGt9xi";
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
 const app = express();
 
-// ⚠️ Le webhook doit être déclaré AVANT express.json()
+// ⚠️ Le webhook doit être AVANT express.json()
 app.post(
-  "/api/webhook-stripe",
+  "/api/webhook",
   express.raw({ type: "application/json" }),
   (req, res) => {
     const sig = req.headers["stripe-signature"];
@@ -31,7 +28,6 @@ app.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Paiement validé
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
@@ -170,9 +166,9 @@ app.post("/api/payer", async (req, res) => {
         }
       ],
       success_url:
-        "https://h-ptt9.onrender.com/reservation-success.html",
+        process.env.FRONTEND_URL + "/reservation-success.html",
       cancel_url:
-        "https://h-ptt9.onrender.com/reservation-cancel.html",
+        process.env.FRONTEND_URL + "/reservation-cancel.html",
       metadata: {
         nom,
         email,
