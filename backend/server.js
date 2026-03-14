@@ -96,13 +96,13 @@ app.post("/api/reserver", (req, res) => {
 
     const createdAt = new Date().toISOString();
 
-    db.run(
-      `INSERT INTO reservations (nom, email, bungalow, debut, fin, created_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [nom, email, bungalow, debut, fin, createdAt],
-      function () {
-        updateICS(bungalow);
-        res.json({ success: true, id: this.lastID });
+try {
+  const stmt = db.prepare("INSERT INTO reservations (...) VALUES (?, ?, ?, ?)");
+  stmt.run(param1, param2, param3, param4);
+  res.json({ success: true });
+} catch (err) {
+  res.json({ error: err.message });
+}
       }
     );
   });
