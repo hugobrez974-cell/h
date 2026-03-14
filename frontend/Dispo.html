@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Disponibilités – Les Bungalows</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body{
+      font-family:sans-serif;
+      background:#f4e9d8;
+      color:#3A2F25;
+      padding:2rem;
+    }
+    h1{margin-bottom:1rem;}
+    label{margin-right:0.5rem;}
+    select{
+      padding:0.4rem 0.6rem;
+      margin-right:0.5rem;
+      border-radius:0.4rem;
+      border:1px solid #d0c2aa;
+    }
+    .cal{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:4px;
+      margin-top:20px;
+      max-width:420px;
+    }
+    .cal div{
+      padding:6px;
+      text-align:center;
+      border-radius:6px;
+      font-size:12px;
+    }
+    .head{font-weight:700;}
+    .off{opacity:0.3;}
+    .busy{background:#c97b7b;color:white;}
+    .free{background:#a7c4a0;color:#5a4633;cursor:pointer;}
+
+    .btn-retour {
+      display:inline-block;
+      padding:0.6rem 1.2rem;
+      background:#a7c4a0;
+      color:#3A2F25;
+      border:none;
+      border-radius:999px;
+      font-weight:700;
+      cursor:pointer;
+      margin-bottom:1rem;
+    }
+    .btn-retour:hover {
+      background:#8fb48a;
+    }
+  </style>
+</head>
+<body>
+
+<button onclick="history.back()" class="btn-retour">← Retour</button>
+
+<h1>Disponibilités</h1>
+
+<label>Bungalow :</label>
+<select id="bungalow-select">
+  <option value="bungalow1">Bungalow 1</option>
+  <option value="bungalow2">Bungalow 2</option>
+</select>
+
+<br><br>
+
+<label>Mois :</label>
+<select id="mois-select">
+  <option value="0">Janvier</option>
+  <option value="1">Février</option>
+  <option value="2">Mars</option>
+  <option value="3">Avril</option>
+  <option value="4">Mai</option>
+  <option value="5">Juin</option>
+  <option value="6">Juillet</option>
+  <option value="7">Août</option>
+  <option value="8">Septembre</option>
+  <option value="9">Octobre</option>
+  <option value="10">Novembre</option>
+  <option value="11">Décembre</option>
+</select>
+
+<label>Année :</label>
+<select id="annee-select"></select>
+
+<div id="calendar" class="cal"></div>
+<div id="liste"></div>
+
+<script>
+const anneeSelect = document.getElementById("annee-select");
+const moisSelect = document.getElementById("mois-select");
+const bungalowSelect = document.getElementById("bungalow-select");
+const currentYear = new Date().getFullYear();
+
+// Remplir années
+for (let y = currentYear; y <= currentYear + 5; y++) {
+  const opt = document.createElement("option");
+  opt.value = y;
+  opt.textContent = y;
+  anneeSelect.appendChild(opt);
+}
+
+moisSelect.value = new Date().getMonth();
+anneeSelect.value = currentYear;
+
+async function loadCalendar() {
+  const bungalow = bungalowSelect.value;
+  const res = await fetch(`/api/disponibilites?bungalow=${encodeURIComponent(bungalow)}`);
+  const ranges = await res.json();
+
+  const busy = new Set();
+  ranges.forEach(r => {
+    let d = new Date(r.debut);
+    const end = new Date(r.fin);
+    while (d <= end) {
+      busy.add(d.toISOString().split("T")[0]);
+      d.setDate(d.getDate()+1);
+    }
+  });
+
+  const month = parseInt(moisSelect.value);
+  const year = parseInt(anneeSelect.value);
+
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month+1, 0);
+
+  const cal = document.getElementById("calendar");
+  cal.innerHTML = "";
+
+  ["L","M","M","J","V","S","D"].forEach(j=>{
+    const h=document.createElement("div");
+    h.textContent=j;
+    h.className="head";
+    cal.appendChild(h);
+  });
+
+  let start = (first.getDay()+6)%7;
+  for(let i=0;i<start;i++){
+    const cell=document.createElement("div");
+    cell.className="off";
+    cal.appendChild(cell);
+  }
+
+  for(let d=1; d<=last.getDate(); d++){
+    const date = new Date(year, month, d);
+    const iso = date.toISOString().split("T")[0];
+    const cell = document.createElement("div");
+    cell.textContent = d;
+
+    if (busy.has(iso)) {
+      cell.className = "busy";
+    } else {
+      cell.className = "free";
+      cell.onclick = () => {
+        window.location.href = `reservation.html?bungalow=${bungalow}&date=${iso}`;
+      };
+    }
+    cal.appendChild(cell);
+  }
+
+  const liste = document.getElementById("liste");
+  let html = "<h2>Dates réservées</h2>";
+  if (ranges.length === 0) {
+    html += "<p>Aucune réservation pour le moment.</p>";
+  } else {
+    html += "<ul>";
+    ranges.forEach(r=>{
+      html += `<li>Du ${r.debut} au ${r.fin}</li>`;
+    });
+    html += "</ul>";
+  }
+  liste.innerHTML = html;
+}
+
+bungalowSelect.addEventListener("change", loadCalendar);
+moisSelect.addEventListener("change", loadCalendar);
+anneeSelect.addEventListener("change", loadCalendar);
+
+loadCalendar();
+</script>
+
+</body>
+</html>
