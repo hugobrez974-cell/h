@@ -1,5 +1,5 @@
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
+const Database = require("better-sqlite3");
 const fs = require("fs");
 const path = require("path");
 const nodemailer = require("nodemailer");
@@ -16,7 +16,7 @@ const icalDir = path.join(__dirname, "ical");
 if (!fs.existsSync(icalDir)) fs.mkdirSync(icalDir);
 
 // Base SQLite
-const db = new sqlite3.Database(path.join(__dirname, "database.sqlite"));
+const db = new Database("database.sqlite");
 
 db.serialize(() => {
   db.run(`
