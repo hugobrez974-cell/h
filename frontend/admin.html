@@ -27,6 +27,20 @@ if (localStorage.getItem("admin") !== "ok") {
   cursor:pointer;
   margin-bottom:1rem;
 }
+      .btn-delete {
+  background: #8b3a3a;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.btn-delete:hover {
+  background: #6d2d2d;
+}
 .btn-retour:hover {
   background:#8fb48a;
 }
@@ -68,6 +82,7 @@ async function loadResa(){
       <td>${r.debut}</td>
       <td>${r.fin}</td>
       <td>${r.created_at}</td>
+      <button class="btn-delete" onclick="deleteResa(${r.id})">Supprimer</button>
     `;
     tbody.appendChild(tr);
   });
