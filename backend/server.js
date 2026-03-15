@@ -6,19 +6,13 @@ const Stripe = require("stripe");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
-
-
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Base de données
-const db = new Database("reservations.db");
+const db = new Database("database.db");
 
-// Création table si inexistante
+// Création de la table si elle n'existe pas
 db.prepare(`
   CREATE TABLE IF NOT EXISTS reservations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,83 +25,66 @@ db.prepare(`
   )
 `).run();
 
-// Fonction prix dynamique
-function calculerPrix(debut, fin) {
-  const d1 = new Date(debut);
-  const d2 = new Date(fin);
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-  let total = 0;
+// Servir le frontend
+app.use(express.static(path.join(__dirname, "../frontend")));
 
-  for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
-    const jour = d.getDay(); // 0=dimanche ... 5=vendredi, 6=samedi
-    if (jour === 5 || jour === 6) total += 150;
-    else total += 120;
-  }
+// Route : récupérer les disponibilités
+app.get("/api/disponibilites", (req, res) => {
+  const bungalow = req.query.bungalow;
 
-  return total;
-}
-
-// Vérifier doublon
-function estDisponible(bungalow, debut, fin) {
   const rows = db.prepare(`
-    SELECT * FROM reservations
-    WHERE bungalow = ?
-    AND NOT (fin <= ? OR debut >= ?)
-  `).all(bungalow, debut, fin);
+    SELECT debut, fin FROM reservations WHERE bungalow = ?
+  `).all(bungalow);
 
-  return rows.length === 0;
-}
+  res.json(rows);
+});
 
-// Route payer (Stripe Checkout)
-app.post("/api/payer", async (req, res) => {
-  const { nom, email, bungalow, debut, fin } = req.body;
-
-  if (!nom || !email || !bungalow || !debut || !fin) {
-    return res.status(400).json({ error: "Données manquantes" });
-  }
-
-  if (!estDisponible(bungalow, debut, fin)) {
-    return res.status(400).json({ error: "Ce bungalow est déjà réservé à ces dates." });
-  }
-
-  const prix = calculerPrix(debut, fin);
+// Route : créer une session Stripe
+app.post("/api/checkout", async (req, res) => {
+  const { nom, email, bungalow, debut, fin, prix } = req.body;
 
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
-      customer_email: email,
       line_items: [
         {
           price_data: {
             currency: "eur",
-            product_data: { name: `Réservation ${bungalow}` },
+            product_data: {
+              name: `Réservation ${bungalow}`
+            },
             unit_amount: prix * 100
           },
           quantity: 1
         }
       ],
-      success_url: `${process.env.FRONTEND_URL}/success.html`,
-      cancel_url: `${process.env.FRONTEND_URL}/cancel.html`,
+      success_url: process.env.SUCCESS_URL,
+      cancel_url: process.env.CANCEL_URL,
       metadata: { nom, email, bungalow, debut, fin, prix }
     });
 
     res.json({ url: session.url });
   } catch (err) {
     console.error("Erreur Stripe :", err);
-    res.status(500).json({ error: "Erreur Stripe" });
+    res.status(500).json({ error: "Erreur création session Stripe" });
   }
 });
 
 // Webhook Stripe
-app.post("/api/webhook", bodyParser.raw({ type: "application/json" }), (req, res) => {
-  const sig = req.headers["stripe-signature"];
-
+app.post("/webhook", bodyParser.raw({ type: "application/json" }), (req, res) => {
   let event;
+
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      req.headers["stripe-signature"],
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
   } catch (err) {
-    console.error("Webhook invalide :", err.message);
+    console.error("Erreur webhook :", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -117,7 +94,14 @@ app.post("/api/webhook", bodyParser.raw({ type: "application/json" }), (req, res
     db.prepare(`
       INSERT INTO reservations (nom, email, bungalow, debut, fin, prix)
       VALUES (?, ?, ?, ?, ?, ?)
-    `).run(data.nom, data.email, data.bungalow, data.debut, data.fin, data.prix);
+    `).run(
+      data.nom,
+      data.email,
+      data.bungalow,
+      data.debut,
+      data.fin,
+      data.prix
+    );
 
     console.log("Réservation enregistrée :", data);
   }
@@ -125,44 +109,8 @@ app.post("/api/webhook", bodyParser.raw({ type: "application/json" }), (req, res
   res.json({ received: true });
 });
 
-if (event.type === "checkout.session.completed") {
-    const data = event.data.object.metadata;
-
-    db.prepare(`
-      INSERT INTO reservations (nom, email, bungalow, debut, fin, prix)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(data.nom, data.email, data.bungalow, data.debut, data.fin, data.prix);
-
-    // ENVOI EMAIL AU CLIENT
-    envoyerEmail(data.nom, data.email, data.bungalow, data.debut, data.fin, data.prix);
-
-    console.log("Réservation enregistrée et email envoyé :", data);
-}
-
-// Route réservation simple (sans paiement)
-app.post("/api/reserver", (req, res) => {
-  const { nom, email, bungalow, debut, fin } = req.body;
-
-  if (!nom || !email || !bungalow || !debut || !fin) {
-    return res.status(400).json({ error: "Données manquantes" });
-  }
-
-  if (!estDisponible(bungalow, debut, fin)) {
-    return res.status(400).json({ error: "Ce bungalow est déjà réservé à ces dates." });
-  }
-
-  const prix = calculerPrix(debut, fin);
-
-  db.prepare(`
-    INSERT INTO reservations (nom, email, bungalow, debut, fin, prix)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(nom, email, bungalow, debut, fin, prix);
-
-  res.json({ success: true });
+// Démarrage serveur
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log("Serveur backend démarré sur le port", PORT);
 });
-
-// Serveur
-app.use(express.static(path.join(__dirname, "../frontend")));
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Serveur lancé sur le port", PORT));
