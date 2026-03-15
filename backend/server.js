@@ -5,40 +5,8 @@ const path = require("path");
 const Stripe = require("stripe");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  }
-});
 
-function envoyerEmail(nom, email, bungalow, debut, fin, prix) {
-  const message = {
-    from: `"Les Bungalows" <${process.env.SMTP_USER}>`,
-    to: email,
-    subject: "Votre réservation est confirmée ✔",
-    html: `
-      <h2>Merci pour votre réservation, ${nom} !</h2>
-      <p>Votre séjour est bien confirmé :</p>
-      <ul>
-        <li><b>Bungalow :</b> ${bungalow}</li>
-        <li><b>Date d'arrivée :</b> ${debut}</li>
-        <li><b>Date de départ :</b> ${fin}</li>
-        <li><b>Prix total :</b> ${prix} €</li>
-      </ul>
-      <p>Nous avons hâte de vous accueillir 🌴</p>
-    `
-  };
-
-  transporter.sendMail(message)
-    .then(() => console.log("Email envoyé à", email))
-    .catch(err => console.error("Erreur email :", err));
-}
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
