@@ -3,69 +3,21 @@ const Database = require("better-sqlite3");
 const fs = require("fs");
 const path = require("path");
 const Stripe = require("stripe");
+const bodyParser = require("body-parser");
+const cors = require("cors");
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
 const app = express();
-
-// ⚠️ Le webhook doit être AVANT express.json()
-app.post(
-  "/api/webhook",
-  express.raw({ type: "application/json" }),
-  (req, res) => {
-    const sig = req.headers["stripe-signature"];
-
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        STRIPE_WEBHOOK_SECRET
-      );
-    } catch (err) {
-      console.error("Erreur signature webhook:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
-
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-
-      const nom = session.metadata.nom;
-      const email = session.metadata.email;
-      const bungalow = session.metadata.bungalow;
-      const debut = session.metadata.debut;
-      const fin = session.metadata.fin;
-      const createdAt = new Date().toISOString();
-
-      try {
-        const stmt = db.prepare(
-          "INSERT INTO reservations (nom, email, bungalow, debut, fin, created_at) VALUES (?, ?, ?, ?, ?, ?)"
-        );
-        stmt.run(nom, email, bungalow, debut, fin, createdAt);
-
-        updateICS(bungalow);
-        console.log("Réservation confirmée après paiement:", nom, bungalow);
-      } catch (err) {
-        console.error("Erreur insertion réservation:", err);
-      }
-    }
-
-    res.json({ received: true });
-  }
-);
-
-// Le reste de l’API peut utiliser JSON normalement
+app.use(cors());
 app.use(express.json());
 
-// Dossier iCal
-const icalDir = path.join(__dirname, "ical");
-if (!fs.existsSync(icalDir)) fs.mkdirSync(icalDir);
+// Base de données
+const db = new Database("reservations.db");
 
-// Base SQLite
-const db = new Database("database.sqlite");
-
-db.exec(`
+// Création table si inexistante
+db.prepare(`
   CREATE TABLE IF NOT EXISTS reservations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nom TEXT,
@@ -73,61 +25,38 @@ db.exec(`
     bungalow TEXT,
     debut TEXT,
     fin TEXT,
-    created_at TEXT
+    prix INTEGER
   )
-`);
+`).run();
 
-// Format iCal
-function formatICS(dateStr) {
-  const d = new Date(dateStr);
-  return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+// Fonction prix dynamique
+function calculerPrix(debut, fin) {
+  const d1 = new Date(debut);
+  const d2 = new Date(fin);
+
+  let total = 0;
+
+  for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
+    const jour = d.getDay(); // 0=dimanche ... 5=vendredi, 6=samedi
+    if (jour === 5 || jour === 6) total += 150;
+    else total += 120;
+  }
+
+  return total;
 }
 
-// Mise à jour du fichier iCal
-function updateICS(bungalow) {
-  const rows = db
-    .prepare("SELECT * FROM reservations WHERE bungalow = ? ORDER BY debut")
-    .all(bungalow);
-
-  let ics = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Les Bungalows//FR
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-`;
-
-  rows.forEach((r) => {
-    ics += `
-BEGIN:VEVENT
-UID:${r.id}@lesbungalows
-DTSTAMP:${formatICS(r.created_at)}
-DTSTART;VALUE=DATE:${r.debut.replace(/-/g, "")}
-DTEND;VALUE=DATE:${r.fin.replace(/-/g, "")}
-SUMMARY:Réservation - ${r.bungalow}
-DESCRIPTION:Réservé par ${r.nom} (${r.email})
-END:VEVENT
-`;
-  });
-
-  ics += "END:VCALENDAR";
-
-  fs.writeFileSync(path.join(icalDir, `${bungalow}.ics`), ics);
-}
-
-// Vérification des disponibilités
-function isAvailable(bungalow, debut, fin) {
-  const rows = db
-    .prepare(
-      `SELECT * FROM reservations
-       WHERE bungalow = ?
-       AND (debut < ? AND fin > ?)`
-    )
-    .all(bungalow, fin, debut);
+// Vérifier doublon
+function estDisponible(bungalow, debut, fin) {
+  const rows = db.prepare(`
+    SELECT * FROM reservations
+    WHERE bungalow = ?
+    AND NOT (fin <= ? OR debut >= ?)
+  `).all(bungalow, debut, fin);
 
   return rows.length === 0;
 }
 
-// API : créer une session de paiement Stripe
+// Route payer (Stripe Checkout)
 app.post("/api/payer", async (req, res) => {
   const { nom, email, bungalow, debut, fin } = req.body;
 
@@ -135,104 +64,89 @@ app.post("/api/payer", async (req, res) => {
     return res.status(400).json({ error: "Données manquantes" });
   }
 
-  if (!isAvailable(bungalow, debut, fin)) {
-    return res.status(400).json({ error: "Dates déjà réservées" });
+  if (!estDisponible(bungalow, debut, fin)) {
+    return res.status(400).json({ error: "Ce bungalow est déjà réservé à ces dates." });
   }
 
-  const d1 = new Date(debut);
-  const d2 = new Date(fin);
-  const nuits = (d2 - d1) / (1000 * 60 * 60 * 24);
-
-  if (nuits <= 0) {
-    return res.status(400).json({ error: "Dates invalides" });
-  }
-
-  const prix = nuits * 150;
+  const prix = calculerPrix(debut, fin);
 
   try {
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
       payment_method_types: ["card"],
+      mode: "payment",
+      customer_email: email,
       line_items: [
         {
           price_data: {
             currency: "eur",
-            product_data: {
-              name: `Séjour ${bungalow} (${debut} → ${fin})`
-            },
+            product_data: { name: `Réservation ${bungalow}` },
             unit_amount: prix * 100
           },
           quantity: 1
         }
       ],
-      success_url:
-        process.env.FRONTEND_URL + "/reservation-success.html",
-      cancel_url:
-        process.env.FRONTEND_URL + "/reservation-cancel.html",
-      metadata: {
-        nom,
-        email,
-        bungalow,
-        debut,
-        fin
-      }
+      success_url: `${process.env.FRONTEND_URL}/success.html`,
+      cancel_url: `${process.env.FRONTEND_URL}/cancel.html`,
+      metadata: { nom, email, bungalow, debut, fin, prix }
     });
 
     res.json({ url: session.url });
   } catch (err) {
-    console.error("Erreur Stripe:", err);
+    console.error("Erreur Stripe :", err);
     res.status(500).json({ error: "Erreur Stripe" });
   }
 });
 
-// API : disponibilités
-app.get("/api/disponibilites", (req, res) => {
-  const { bungalow } = req.query;
+// Webhook Stripe
+app.post("/api/webhook", bodyParser.raw({ type: "application/json" }), (req, res) => {
+  const sig = req.headers["stripe-signature"];
 
-  const rows = db
-    .prepare(
-      "SELECT debut, fin FROM reservations WHERE bungalow = ? ORDER BY debut"
-    )
-    .all(bungalow);
-
-  res.json(rows);
-});
-
-// API : liste admin
-app.get("/api/reservations", (req, res) => {
-  const rows = db
-    .prepare("SELECT * FROM reservations ORDER BY created_at DESC")
-    .all();
-
-  res.json(rows);
-});
-
-// Fichiers iCal
-app.use("/ical", express.static(icalDir));
-
-// Serveur frontend
-app.use("/", express.static(path.join(__dirname, "..", "frontend")));
-
-app.post("/api/delete-reservation", (req, res) => {
-  const { id } = req.body;
-
-  if (!id) {
-    return res.status(400).json({ error: "ID manquant" });
-  }
-
+  let event;
   try {
-    const resa = db.prepare("SELECT bungalow FROM reservations WHERE id = ?").get(id);
-
-    db.prepare("DELETE FROM reservations WHERE id = ?").run(id);
-
-    if (resa) updateICS(resa.bungalow);
-
-    res.json({ success: true });
+    event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    console.error("Erreur suppression :", err);
-    res.status(500).json({ error: "Erreur serveur" });
+    console.error("Webhook invalide :", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
+
+  if (event.type === "checkout.session.completed") {
+    const data = event.data.object.metadata;
+
+    db.prepare(`
+      INSERT INTO reservations (nom, email, bungalow, debut, fin, prix)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(data.nom, data.email, data.bungalow, data.debut, data.fin, data.prix);
+
+    console.log("Réservation enregistrée :", data);
+  }
+
+  res.json({ received: true });
 });
+
+// Route réservation simple (sans paiement)
+app.post("/api/reserver", (req, res) => {
+  const { nom, email, bungalow, debut, fin } = req.body;
+
+  if (!nom || !email || !bungalow || !debut || !fin) {
+    return res.status(400).json({ error: "Données manquantes" });
+  }
+
+  if (!estDisponible(bungalow, debut, fin)) {
+    return res.status(400).json({ error: "Ce bungalow est déjà réservé à ces dates." });
+  }
+
+  const prix = calculerPrix(debut, fin);
+
+  db.prepare(`
+    INSERT INTO reservations (nom, email, bungalow, debut, fin, prix)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(nom, email, bungalow, debut, fin, prix);
+
+  res.json({ success: true });
+});
+
+// Serveur
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Serveur lancé sur port " + PORT));
+app.listen(PORT, () => console.log("Serveur lancé sur le port", PORT));
