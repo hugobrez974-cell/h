@@ -199,17 +199,19 @@ async function payer() {
 
   if (prix <= 0) return alert("Dates invalides");
 
-  const res = await fetch("/api/checkout", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      nom: nom.value,
-      email: email.value,
-      bungalow: bungalow.value,
-      debut: dDebut,
-      fin: dFin
-    })
-  });
+ const res = await fetch("/api/checkout", {
+  method:"POST",
+  headers:{ "Content-Type":"application/json" },
+  body:JSON.stringify({
+    nom: nom.value,
+    email: email.value,
+    bungalow: bungalow.value,
+    debut: dDebut,
+    fin: dFin,
+    prix: prix   // ← MANQUAIT !
+  })
+});
+
 
   const json = await res.json();
   if (json.url) window.location.href = json.url;
