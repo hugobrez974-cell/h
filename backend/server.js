@@ -157,6 +157,20 @@ app.post("/api/webhook", bodyParser.raw({ type: "application/json" }), (req, res
   res.json({ received: true });
 });
 
+if (event.type === "checkout.session.completed") {
+    const data = event.data.object.metadata;
+
+    db.prepare(`
+      INSERT INTO reservations (nom, email, bungalow, debut, fin, prix)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(data.nom, data.email, data.bungalow, data.debut, data.fin, data.prix);
+
+    // ENVOI EMAIL AU CLIENT
+    envoyerEmail(data.nom, data.email, data.bungalow, data.debut, data.fin, data.prix);
+
+    console.log("Réservation enregistrée et email envoyé :", data);
+}
+
 // Route réservation simple (sans paiement)
 app.post("/api/reserver", (req, res) => {
   const { nom, email, bungalow, debut, fin } = req.body;
