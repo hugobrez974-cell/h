@@ -199,7 +199,7 @@ async function payer() {
 
   if (prix <= 0) return alert("Dates invalides");
 
-  const res = await fetch("/api/payer", {
+  const res = await fetch("/api/checkout", {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({
