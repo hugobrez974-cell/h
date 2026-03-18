@@ -29,6 +29,15 @@
     .btn-retour:hover {
       background:#8fb48a;
     }
+    .alert-construction {
+  background: #f7d7a6;
+  color: #5a3e1b;
+  padding: 1rem;
+  border-radius: 0.6rem;
+  margin: 1rem 0;
+  font-weight: 700;
+  border: 2px solid #e6b97c;
+}
   </style>
 </head>
 <body>
@@ -260,7 +269,11 @@ if (params.get("date")) {
   jourDebut.value = d.getDate();
   majPrix();
 }
-  <h1>⚠️ Le site et le systeme de payement sont toujours en construction ⚠️</h1>
+  <div class="alert-construction">
+  ⚠️ Le site et le système de paiement sont toujours en construction.  
+  Les fonctionnalités peuvent être limitées.
+</div>
+  
 </script>
 </body>
 </html>
