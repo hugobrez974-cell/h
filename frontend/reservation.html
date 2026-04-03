@@ -1,125 +1,243 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Réservation bungalow</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>Réserver – Les Bungalows</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
-    body { font-family: system-ui, sans-serif; padding: 20px; background:#f5f5f5; }
-    .container { max-width: 500px; margin: 0 auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.1); }
-    label { display:block; margin-top:10px; font-weight:600; }
-    input { width:100%; padding:8px; margin-top:4px; border-radius:4px; border:1px solid #ccc; }
-    button { margin-top:20px; padding:10px 16px; border:none; border-radius:4px; background:#007bff; color:#fff; font-weight:600; cursor:pointer; width:100%; }
-    button:disabled { background:#aaa; cursor:not-allowed; }
-    .info { margin-top:10px; font-size:14px; color:#555; }
-    .alert-construction { margin-top:20px; padding:10px; background:#fff3cd; border:1px solid #ffeeba; border-radius:4px; font-size:14px; }
+    body { font-family:sans-serif; padding:2rem; background:#f4e9d8; }
+    form { background:white; padding:2rem; border-radius:1rem; max-width:420px; margin:auto; }
+    label { display:block; margin-top:0.8rem; }
+    input, select { width:100%; padding:0.6rem; margin-top:0.3rem; }
+    .date-row { display:flex; gap:0.5rem; }
+    .date-row select { width:33%; }
+    button { margin-top:1rem; padding:0.8rem; width:100%; background:#a7c4a0; border:none; border-radius:0.5rem; font-weight:700; cursor:pointer; }
+    #prix { font-weight:700; margin-top:1rem; }
+
+    .btn-retour {
+      display:inline-block;
+      padding:0.6rem 1.2rem;
+      background:#a7c4a0;
+      color:#3A2F25;
+      border:none;
+      border-radius:999px;
+      font-weight:700;
+      cursor:pointer;
+      margin-bottom:1rem;
+    }
+    .btn-retour:hover {
+      background:#8fb48a;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Réservation</h1>
 
-    <div id="resume"></div>
+<button onclick="location.href='main.html'" class="btn-retour">← Retour</button>
 
-    <label for="nom">Nom</label>
-    <input type="text" id="nom" placeholder="Votre nom complet" />
+<h1>Réserver</h1>
 
-    <label for="email">Email</label>
-    <input type="email" id="email" placeholder="Votre email" />
+<form id="resa-form">
+  <label>Nom</label>
+  <input id="nom" required>
 
-    <button id="btnPayer" onclick="payer()">Payer la réservation</button>
+  <label>Email</label>
+  <input id="email" type="email" required>
 
-    <div class="info" id="info"></div>
+  <label>Bungalow</label>
+  <select id="bungalow" required>
+    <option value="bungalow1">Bungalow 1</option>
+    <option value="bungalow2">Bungalow 2</option>
+  </select>
 
-    <div class="alert-construction">
-      ⚠️ Le site et le système de paiement sont toujours en construction.
-      Les fonctionnalités peuvent être limitées.
-    </div>
+  <label>Date d'arrivée</label>
+  <div class="date-row">
+    <select id="jour-debut"></select>
+    <select id="mois-debut">
+      <option value="0">Janvier</option>
+      <option value="1">Février</option>
+      <option value="2">Mars</option>
+      <option value="3">Avril</option>
+      <option value="4">Mai</option>
+      <option value="5">Juin</option>
+      <option value="6">Juillet</option>
+      <option value="7">Août</option>
+      <option value="8">Septembre</option>
+      <option value="9">Octobre</option>
+      <option value="10">Novembre</option>
+      <option value="11">Décembre</option>
+    </select>
+    <select id="annee-debut"></select>
   </div>
 
-  <script>
-    const API_BASE = "https://h-ptt9.onrender.com";
+  <label>Date de départ</label>
+  <div class="date-row">
+    <select id="jour-fin"></select>
+    <select id="mois-fin">
+      <option value="0">Janvier</option>
+      <option value="1">Février</option>
+      <option value="2">Mars</option>
+      <option value="3">Avril</option>
+      <option value="4">Mai</option>
+      <option value="5">Juin</option>
+      <option value="6">Juillet</option>
+      <option value="7">Août</option>
+      <option value="8">Septembre</option>
+      <option value="9">Octobre</option>
+      <option value="10">Novembre</option>
+      <option value="11">Décembre</option>
+    </select>
+    <select id="annee-fin"></select>
+  </div>
 
-    function getParams() {
-      const params = new URLSearchParams(window.location.search);
-      return {
-        bungalow: params.get("bungalow"),
-        date: params.get("date")
-      };
-    }
+  <div id="prix">Prix : 0 €</div>
 
-    function afficherResume() {
-      const { bungalow, date } = getParams();
-      const resumeDiv = document.getElementById("resume");
+  <button type="submit">Réserver</button>
+  <button type="button" onclick="payer()">💳 Payer maintenant</button>
+</form>
 
-      if (!bungalow || !date) {
-        resumeDiv.innerHTML = "<p>Paramètres de réservation manquants.</p>";
-        document.getElementById("btnPayer").disabled = true;
-        return;
-      }
+<script>
+// Remplir années
+function remplirAnnees(select) {
+  const currentYear = new Date().getFullYear();
+  for (let y = currentYear; y <= currentYear + 5; y++) {
+    const opt = document.createElement("option");
+    opt.value = y;
+    opt.textContent = y;
+    select.appendChild(opt);
+  }
+}
 
-      resumeDiv.innerHTML = `
-        <p><strong>Bungalow :</strong> ${bungalow}</p>
-        <p><strong>Date :</strong> ${date}</p>
-      `;
-    }
+// Remplir jours selon mois/année
+function remplirJours(selectJour, selectMois, selectAnnee) {
+  const mois = parseInt(selectMois.value);
+  const annee = parseInt(selectAnnee.value);
+  const jours = new Date(annee, mois + 1, 0).getDate();
+  selectJour.innerHTML = "";
+  for (let j = 1; j <= jours; j++) {
+    const opt = document.createElement("option");
+    opt.value = j;
+    opt.textContent = j;
+    selectJour.appendChild(opt);
+  }
+}
 
-    async function payer() {
-      const { bungalow, date } = getParams();
-      const nom = document.getElementById("nom").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const info = document.getElementById("info");
+// Récupération des éléments
+const jourDebut = document.getElementById("jour-debut");
+const moisDebut = document.getElementById("mois-debut");
+const anneeDebut = document.getElementById("annee-debut");
 
-      info.textContent = "";
+const jourFin = document.getElementById("jour-fin");
+const moisFin = document.getElementById("mois-fin");
+const anneeFin = document.getElementById("annee-fin");
 
-      if (!nom || !email) {
-        info.textContent = "Merci de remplir nom et email.";
-        return;
-      }
+// Initialisation
+remplirAnnees(anneeDebut);
+remplirAnnees(anneeFin);
 
-      if (!bungalow || !date) {
-        info.textContent = "Paramètres de réservation invalides.";
-        return;
-      }
+anneeDebut.value = new Date().getFullYear();
+anneeFin.value = new Date().getFullYear();
 
-      const prix = 120; // adapte selon bungalow / saison
+remplirJours(jourDebut, moisDebut, anneeDebut);
+remplirJours(jourFin, moisFin, anneeFin);
 
-      const body = {
-        nom,
-        email,
-        bungalow,
-        debut: date,
-        fin: date,
-        prix
-      };
+// Mise à jour jours quand mois/année changent
+moisDebut.addEventListener("change", () => { remplirJours(jourDebut, moisDebut, anneeDebut); majPrix(); });
+anneeDebut.addEventListener("change", () => { remplirJours(jourDebut, moisDebut, anneeDebut); majPrix(); });
 
-      try {
-        const response = await fetch(API_BASE + "/api/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
+moisFin.addEventListener("change", () => { remplirJours(jourFin, moisFin, anneeFin); majPrix(); });
+anneeFin.addEventListener("change", () => { remplirJours(jourFin, moisFin, anneeFin); majPrix(); });
 
-        const data = await response.json();
+// Construire une date YYYY-MM-DD
+function buildDate(annee, mois, jour) {
+  return `${annee}-${String(parseInt(mois)+1).padStart(2,"0")}-${String(jour).padStart(2,"0")}`;
+}
 
-        if (!response.ok) {
-          console.error("Erreur API:", data);
-          info.textContent = data.error || "Erreur lors de la création du paiement.";
-          return;
-        }
+function calculerPrix() {
+  const dDebut = buildDate(anneeDebut.value, moisDebut.value, jourDebut.value);
+  const dFin   = buildDate(anneeFin.value, moisFin.value, jourFin.value);
 
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          info.textContent = "Réponse inattendue du serveur.";
-        }
-      } catch (err) {
-        console.error("Erreur fetch:", err);
-        info.textContent = "Erreur réseau ou serveur.";
-      }
-    }
+  const d1 = new Date(dDebut);
+  const d2 = new Date(dFin);
+  const nuits = (d2 - d1) / (1000 * 60 * 60 * 24);
+  return nuits > 0 ? nuits * 150 : 0;
+}
 
-    afficherResume();
-  </script>
+function majPrix() {
+  prix.textContent = "Prix : " + calculerPrix() + " €";
+}
+
+jourDebut.addEventListener("change", majPrix);
+jourFin.addEventListener("change", majPrix);
+
+// Paiement Stripe
+async function payer() {
+  const dDebut = buildDate(anneeDebut.value, moisDebut.value, jourDebut.value);
+  const dFin   = buildDate(anneeFin.value, moisFin.value, jourFin.value);
+  const prix = calculerPrix();
+
+  if (prix <= 0) return alert("Dates invalides");
+
+  const res = await fetch("/api/checkout", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      nom: nom.value,
+      email: email.value,
+      bungalow: bungalow.value,
+      debut: dDebut,
+      fin: dFin,
+      prix
+    })
+  });
+
+  const json = await res.json();
+  if (json.url) window.location.href = json.url;
+  else alert("Erreur paiement");
+}
+
+// Réservation simple
+document.getElementById("resa-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const dDebut = buildDate(anneeDebut.value, moisDebut.value, jourDebut.value);
+  const dFin   = buildDate(anneeFin.value, moisFin.value, jourFin.value);
+
+  const data = {
+    nom: nom.value,
+    email: email.value,
+    bungalow: bungalow.value,
+    debut: dDebut,
+    fin: dFin,
+    prix: calculerPrix()
+  };
+
+  const res = await fetch("/api/reserver", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify(data)
+  });
+
+  const json = await res.json();
+
+  if (json.error) alert(json.error);
+  else alert("Réservation confirmée !");
+});
+
+// Pré-remplissage depuis Dispo.html
+const params = new URLSearchParams(location.search);
+if (params.get("bungalow")) {
+  bungalow.value = params.get("bungalow");
+}
+if (params.get("date")) {
+  const d = new Date(params.get("date"));
+  anneeDebut.value = d.getFullYear();
+  moisDebut.value = d.getMonth();
+  remplirJours(jourDebut, moisDebut, anneeDebut);
+  jourDebut.value = d.getDate();
+  majPrix();
+}
+</script>
+
 </body>
 </html>
