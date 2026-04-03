@@ -10,9 +10,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Base SQLite
 const db = new Database("database.db");
 
-// Création de la table si elle n'existe pas
+// Table réservations
 db.prepare(`
   CREATE TABLE IF NOT EXISTS reservations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,12 +26,13 @@ db.prepare(`
   )
 `).run();
 
+// Stripe
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Servir le frontend
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-// Route : récupérer les disponibilités
+// Récupérer disponibilités
 app.get("/api/disponibilites", (req, res) => {
   const bungalow = req.query.bungalow;
 
@@ -41,9 +43,14 @@ app.get("/api/disponibilites", (req, res) => {
   res.json(rows);
 });
 
-// Route : créer une session Stripe
+// Checkout Stripe
 app.post("/api/checkout", async (req, res) => {
   const { nom, email, bungalow, debut, fin, prix } = req.body;
+
+  // Validation
+  if (!nom || !email || !bungalow || !debut || !fin || !prix) {
+    return res.status(400).json({ error: "Champs manquants" });
+  }
 
   try {
     const session = await stripe.checkout.sessions.create({
