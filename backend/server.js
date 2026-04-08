@@ -1,6 +1,5 @@
 const express = require("express");
 const Database = require("better-sqlite3");
-const fs = require("fs");
 const path = require("path");
 const Stripe = require("stripe");
 const bodyParser = require("body-parser");
@@ -10,10 +9,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Base SQLite
 const db = new Database("database.db");
 
-// Table réservations
 db.prepare(`
   CREATE TABLE IF NOT EXISTS reservations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -26,31 +23,39 @@ db.prepare(`
   )
 `).run();
 
-// Stripe
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Servir le frontend
+// Frontend statique
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-// Récupérer disponibilités
+// Disponibilités
 app.get("/api/disponibilites", (req, res) => {
   const bungalow = req.query.bungalow;
-
   const rows = db.prepare(`
     SELECT debut, fin FROM reservations WHERE bungalow = ?
   `).all(bungalow);
-
   res.json(rows);
+});
+
+// Réservation simple (sans paiement)
+app.post("/api/reserver", (req, res) => {
+  const { nom, email, bungalow, debut, fin, prix } = req.body;
+
+  if (!nom || !email || !bungalow || !debut || !fin) {
+    return res.status(400).json({ error: "Champs manquants" });
+  }
+
+  db.prepare(`
+    INSERT INTO reservations (nom, email, bungalow, debut, fin, prix)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run(nom, email, bungalow, debut, fin, prix || 0);
+
+  res.json({ success: true });
 });
 
 // Checkout Stripe
 app.post("/api/checkout", async (req, res) => {
   const { nom, email, bungalow, debut, fin, prix } = req.body;
-
-  // Validation
-  if (!nom || !email || !bungalow || !debut || !fin || !prix) {
-    return res.status(400).json({ error: "Champs manquants" });
-  }
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -60,9 +65,7 @@ app.post("/api/checkout", async (req, res) => {
         {
           price_data: {
             currency: "eur",
-            product_data: {
-              name: `Réservation ${bungalow}`
-            },
+            product_data: { name: `Réservation ${bungalow}` },
             unit_amount: prix * 100
           },
           quantity: 1
@@ -116,7 +119,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), (req, res) =>
   res.json({ received: true });
 });
 
-// Démarrage serveur
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log("Serveur backend démarré sur le port", PORT);
