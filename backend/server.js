@@ -3,22 +3,14 @@ const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
 const bodyParser = require("body-parser");
 const nodemailer = require("nodemailer");
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = express();
+
+// Stripe Webhook doit lire le RAW body
+app.use("/webhook", express.raw({ type: "application/json" }));
+
 app.use(cors());
 app.use(bodyParser.json());
-
-// --- CONFIG ADMIN ---
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin974";
-
-// --- CONFIG EMAIL ---
-const transporter = nodemailer.createTransport({
-  service: "gmail", // ou autre
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS
-  }
-});
 
 // --- DB ---
 const db = new sqlite3.Database("./database.db");
@@ -36,90 +28,139 @@ db.run(`
   )
 `);
 
-// --- LOGIN ADMIN ---
-app.post("/admin/login", (req, res) => {
-  const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
-    return res.json({ success: true });
+// --- EMAIL ---
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS
   }
-  res.status(401).json({ success: false, error: "Mot de passe incorrect" });
 });
 
-// --- LISTE DES RÉSA POUR ADMIN ---
-app.get("/admin/reservations", (req, res) => {
-  db.all("SELECT * FROM reservations ORDER BY date ASC", [], (err, rows) => {
-    if (err) return res.status(500).json({ error: "Erreur DB" });
-    res.json(rows);
-  });
-});
-
-// --- FONCTION : générer facture HTML ---
+// --- FACTURE HTML ---
 function generateInvoiceHTML(resa) {
   return `
   <html>
-  <body style="font-family: Arial, sans-serif;">
-    <h2>Facture - Les Tonneaux des Ô</h2>
-    <p>Merci ${resa.name},</p>
-    <p>Nous confirmons votre réservation :</p>
-    <ul>
-      <li>Date d'arrivée : <b>${resa.date}</b></li>
-      <li>Nombre de nuits : <b>${resa.nights}</b></li>
-      <li>Montant total : <b>${resa.price.toFixed(2)} €</b></li>
-    </ul>
-    <p>Nous avons hâte de vous accueillir dans nos tonneaux.</p>
-    <p>À très bientôt,<br>Les Tonneaux des Ô</p>
+  <body style="font-family: Arial; background:#f7f7f7; padding:20px;">
+    <div style="max-width:600px; margin:auto; background:white; padding:20px; border-radius:10px;">
+      <h2 style="text-align:center;">Les Tonneaux des Ô</h2>
+      <p style="text-align:center; color:#777;">Confirmation de réservation</p>
+
+      <hr>
+
+      <p>Bonjour <b>${resa.name}</b>,</p>
+      <p>Votre réservation est confirmée :</p>
+
+      <ul>
+        <li><b>Date d'arrivée :</b> ${resa.date}</li>
+        <li><b>Nuits :</b> ${resa.nights}</li>
+        <li><b>Total :</b> ${resa.price} €</li>
+      </ul>
+
+      <p>Nous avons hâte de vous accueillir.</p>
+
+      <p style="text-align:center; margin-top:30px;">
+        Merci pour votre confiance,<br>
+        <b>Les Tonneaux des Ô</b>
+      </p>
+
+      <hr>
+      <p style="font-size:12px; text-align:center; color:#999;">
+        Facture automatique — Réservation n°${resa.id}
+      </p>
+    </div>
   </body>
   </html>
   `;
 }
 
-// --- FONCTION : envoyer email ---
 async function sendReservationEmail(resa) {
   const html = generateInvoiceHTML(resa);
 
   await transporter.sendMail({
     from: `"Les Tonneaux des Ô" <${process.env.MAIL_USER}>`,
     to: resa.email,
-    subject: "Confirmation de votre réservation",
+    subject: "Votre réservation est confirmée ✔",
     html
   });
 }
 
-// --- AJOUT RÉSA PAR ADMIN + EMAIL AUTO ---
-app.post("/admin/add-reservation", async (req, res) => {
-  const { password, date, name, email, nights, price } = req.body;
+// --- CRÉATION SESSION STRIPE ---
+app.post("/create-checkout-session", async (req, res) => {
+  const { date, name, email, nights, price } = req.body;
 
-  if (password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Accès refusé" });
-  }
-
-  db.run(
-    "INSERT INTO reservations (date, name, email, nights, price, admin_block) VALUES (?, ?, ?, ?, ?, 0)",
-    [date, name, email, nights, price],
-    async function (err) {
-      if (err) return res.status(500).json({ error: "Erreur DB" });
-
-      const resa = { id: this.lastID, date, name, email, nights, price };
-
-      try {
-        await sendReservationEmail(resa);
-      } catch (e) {
-        console.error("Erreur envoi email:", e);
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    mode: "payment",
+    customer_email: email,
+    line_items: [
+      {
+        price_data: {
+          currency: "eur",
+          product_data: {
+            name: `Réservation Tonneaux des Ô (${date})`
+          },
+          unit_amount: price * 100
+        },
+        quantity: 1
       }
+    ],
+    metadata: { date, name, email, nights, price },
+    success_url: process.env.SUCCESS_URL,
+    cancel_url: process.env.CANCEL_URL
+  });
 
-      res.json({ success: true, reservation: resa });
-    }
-  );
+  res.json({ url: session.url });
 });
 
-// --- DISPONIBILITÉS (clients) ---
+// --- WEBHOOK STRIPE ---
+app.post("/webhook", (req, res) => {
+  const sig = req.headers["stripe-signature"];
+
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    return res.status(400).send(`Webhook error: ${err.message}`);
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const s = event.data.object;
+
+    const resa = {
+      date: s.metadata.date,
+      name: s.metadata.name,
+      email: s.metadata.email,
+      nights: parseInt(s.metadata.nights),
+      price: parseFloat(s.metadata.price)
+    };
+
+    db.run(
+      "INSERT INTO reservations (date, name, email, nights, price) VALUES (?, ?, ?, ?, ?)",
+      [resa.date, resa.name, resa.email, resa.nights, resa.price],
+      function (err) {
+        if (!err) {
+          resa.id = this.lastID;
+          sendReservationEmail(resa);
+        }
+      }
+    );
+  }
+
+  res.json({ received: true });
+});
+
+// --- DISPONIBILITÉS ---
 app.get("/api/disponibilites", (req, res) => {
   db.all("SELECT date FROM reservations", [], (err, rows) => {
-    if (err) return res.status(500).json({ error: "Erreur DB" });
     const dates = rows.map(r => r.date);
     res.json({ dates });
   });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Serveur sur port " + PORT));
+app.listen(PORT, () => console.log("Serveur OK sur port " + PORT));
