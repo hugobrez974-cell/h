@@ -1,117 +1,141 @@
 <!DOCTYPE html>
 <html lang="fr">
-<script>
-if (localStorage.getItem("admin") !== "ok") {
-  window.location.href = "admin-login.html";
-}
-</script>
 <head>
-  <meta charset="UTF-8">
-  <title>Admin – Réservations</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body{font-family:system-ui, sans-serif;padding:2rem;background:#f5f5f5;}
-    h1{margin-bottom:1rem;}
-    table{border-collapse:collapse;width:100%;background:white;}
-    th,td{border:1px solid #ddd;padding:8px;font-size:14px;}
-    th{background:#eee;}
-    tr:nth-child(even){background:#fafafa;}
-
-    .btn-retour {
-      display:inline-block;
-      padding:0.6rem 1.2rem;
-      background:#A7C4A0;
-      color:#5A4633;
-      border:none;
-      border-radius:999px;
-      font-weight:600;
-      cursor:pointer;
-      margin-bottom:1rem;
-      text-decoration:none;
+<meta charset="UTF-8">
+<title>Admin - Les Tonneaux des Ô</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        padding: 20px;
     }
-    .btn-retour:hover { background:#8fb48a; }
-
-    .btn-delete {
-      background: #8b3a3a;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: 0.2s;
+    h2 {
+        color: #333;
     }
-    .btn-delete:hover {
-      background: #6d2d2d;
+    input, button {
+        padding: 10px;
+        margin: 5px 0;
+        width: 250px;
+        font-size: 16px;
     }
-  </style>
+    button {
+        cursor: pointer;
+        background: #333;
+        color: white;
+        border: none;
+    }
+    #adminPanel {
+        margin-top: 20px;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px #ccc;
+    }
+    .resa-item {
+        background: #fff;
+        padding: 10px;
+        margin: 5px 0;
+        border-left: 4px solid #333;
+    }
+</style>
 </head>
-
 <body>
 
-<a href="main.html" class="btn-retour">← Retour</a>
+<h2>Connexion Admin</h2>
+<input type="password" id="adminPass" placeholder="Mot de passe admin">
+<button onclick="login()">Se connecter</button>
 
-<h1>Réservations</h1>
+<div id="adminPanel" style="display:none;">
+    <h2>Ajouter une réservation</h2>
 
-<table id="resa-table">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Nom</th>
-      <th>Email</th>
-      <th>Bungalow</th>
-      <th>Début</th>
-      <th>Fin</th>
-      <th>Créé le</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+    <input type="date" id="date">
+    <input type="text" id="name" placeholder="Nom du client">
+    <input type="email" id="email" placeholder="Email du client">
+    <input type="number" id="nights" placeholder="Nombre de nuits" value="1">
+    <input type="number" id="price" placeholder="Prix total (€)">
+
+    <button onclick="addResa()">Ajouter la réservation</button>
+
+    <h2>Liste des réservations</h2>
+    <div id="resaList"></div>
+</div>
 
 <script>
-async function loadResa(){
-  const res = await fetch("/api/reservations");
-  const data = await res.json();
-  const tbody = document.querySelector("#resa-table tbody");
-  tbody.innerHTML = "";
+const API = "https://h-e5oa.onrender.com"; // ← CHANGE ICI
+let adminPassword = "";
 
-  data.forEach(r => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${r.id}</td>
-      <td>${r.nom}</td>
-      <td>${r.email}</td>
-      <td>${r.bungalow}</td>
-      <td>${r.debut}</td>
-      <td>${r.fin}</td>
-      <td>${r.created_at}</td>
-      <td><button class="btn-delete" onclick="deleteResa(${r.id})">Supprimer</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
+// --- LOGIN ---
+function login() {
+    const pwd = document.getElementById("adminPass").value;
+
+    fetch(`${API}/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pwd })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            adminPassword = pwd;
+            document.getElementById("adminPanel").style.display = "block";
+            loadResa();
+        } else {
+            alert("Mot de passe incorrect");
+        }
+    });
 }
 
-async function deleteResa(id) {
-  if (!confirm("Supprimer cette réservation ?")) return;
+// --- AJOUT RÉSERVATION ---
+function addResa() {
+    const date = document.getElementById("date").value;
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const nights = parseInt(document.getElementById("nights").value);
+    const price = parseFloat(document.getElementById("price").value);
 
-  const res = await fetch("/api/delete-reservation", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id })
-  });
+    if (!date || !name || !email || !nights || !price) {
+        alert("Merci de remplir tous les champs");
+        return;
+    }
 
-  const data = await res.json();
-
-  if (data.success) {
-    alert("Réservation supprimée");
-    loadResa();
-  } else {
-    alert("Erreur lors de la suppression");
-  }
+    fetch(`${API}/admin/add-reservation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            password: adminPassword,
+            date,
+            name,
+            email,
+            nights,
+            price
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert("Réservation ajoutée et email envoyé");
+            loadResa();
+        } else {
+            alert("Erreur : " + data.error);
+        }
+    });
 }
 
-loadResa();
+// --- CHARGER LES RÉSERVATIONS ---
+function loadResa() {
+    fetch(`${API}/admin/reservations`)
+        .then(r => r.json())
+        .then(rows => {
+            const div = document.getElementById("resaList");
+            div.innerHTML = rows.map(r => `
+                <div class="resa-item">
+                    <b>${r.date}</b><br>
+                    ${r.name} — ${r.email}<br>
+                    ${r.nights} nuit(s) — ${r.price} €
+                </div>
+            `).join("");
+        });
+}
 </script>
 
 </body>
