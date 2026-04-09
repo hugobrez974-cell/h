@@ -7,7 +7,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 
-// Stripe Webhook doit lire le RAW body
+// Webhook Stripe doit lire le RAW body
 app.post("/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
 
 // Le reste en JSON normal
