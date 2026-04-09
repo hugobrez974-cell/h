@@ -1,10 +1,16 @@
-CREATE TABLE IF NOT EXISTS reservations (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  date TEXT NOT NULL,
-  name TEXT NOT NULL,
-  email TEXT NOT NULL,
-  nights INTEGER NOT NULL,
-  price REAL NOT NULL,
-  admin_block INTEGER DEFAULT 0,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP
-);
+const Database = require("better-sqlite3");
+const db = new Database("./database.db");
+
+// Création table
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS reservations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    nights INTEGER NOT NULL,
+    price REAL NOT NULL,
+    admin_block INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`).run();
