@@ -1,140 +1,61 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Admin - Les Tonneaux des Ô</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #f5f5f5;
-        padding: 20px;
-    }
-    h2 {
-        color: #333;
-    }
-    input, button {
-        padding: 10px;
-        margin: 5px 0;
-        width: 250px;
-        font-size: 16px;
-    }
-    button {
-        cursor: pointer;
-        background: #333;
-        color: white;
-        border: none;
-    }
-    #adminPanel {
-        margin-top: 20px;
-        padding: 20px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 0 10px #ccc;
-    }
-    .resa-item {
-        background: #fff;
-        padding: 10px;
-        margin: 5px 0;
-        border-left: 4px solid #333;
-    }
-</style>
+  <meta charset="UTF-8">
+  <title>Admin</title>
 </head>
 <body>
 
-<h2>Connexion Admin</h2>
-<input type="password" id="adminPass" placeholder="Mot de passe admin">
-<button onclick="login()">Se connecter</button>
+<h1>Admin</h1>
+
+<input type="password" id="password" placeholder="Mot de passe admin">
+<button onclick="login()">Connexion</button>
 
 <div id="adminPanel" style="display:none;">
-    <h2>Ajouter une réservation</h2>
-
-    <input type="date" id="date">
-    <input type="text" id="name" placeholder="Nom du client">
-    <input type="email" id="email" placeholder="Email du client">
-    <input type="number" id="nights" placeholder="Nombre de nuits" value="1">
-    <input type="number" id="price" placeholder="Prix total (€)">
-
-    <button onclick="addResa()">Ajouter la réservation</button>
-
-    <h2>Liste des réservations</h2>
-    <div id="resaList"></div>
+  <h2>Réservations</h2>
+  <table id="resaTable" border="1"></table>
 </div>
 
 <script>
-const API = "https://h-e5oa.onrender.com"; // ← CHANGE ICI
-let adminPassword = "";
+async function login() {
+  const password = document.getElementById("password").value;
 
-// --- LOGIN ---
-function login() {
-    const pwd = document.getElementById("adminPass").value;
+  const res = await fetch("https://h-e5oa.onrender.com/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password })
+  });
 
-    fetch(`${API}/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: pwd })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            adminPassword = pwd;
-            document.getElementById("adminPanel").style.display = "block";
-            loadResa();
-        } else {
-            alert("Mot de passe incorrect");
-        }
-    });
+  const json = await res.json();
+
+  if (!json.success) {
+    alert("Mot de passe incorrect");
+    return;
+  }
+
+  document.getElementById("adminPanel").style.display = "block";
+  loadReservations();
 }
 
-// --- AJOUT RÉSERVATION ---
-function addResa() {
-    const date = document.getElementById("date").value;
-    const name = document.getElementById("name").value;
-    const email = document.getElementById("email").value;
-    const nights = parseInt(document.getElementById("nights").value);
-    const price = parseFloat(document.getElementById("price").value);
+async function loadReservations() {
+  const res = await fetch("https://h-e5oa.onrender.com/admin/reservations");
+  const data = await res.json();
 
-    if (!date || !name || !email || !nights || !price) {
-        alert("Merci de remplir tous les champs");
-        return;
-    }
+  const table = document.getElementById("resaTable");
+  table.innerHTML = "<tr><th>ID</th><th>Date</th><th>Nom</th><th>Email</th><th>Nuits</th><th>Prix</th></tr>";
 
-    fetch(`${API}/admin/add-reservation`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            password: adminPassword,
-            date,
-            name,
-            email,
-            nights,
-            price
-        })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            alert("Réservation ajoutée et email envoyé");
-            loadResa();
-        } else {
-            alert("Erreur : " + data.error);
-        }
-    });
-}
-
-// --- CHARGER LES RÉSERVATIONS ---
-function loadResa() {
-    fetch(`${API}/admin/reservations`)
-        .then(r => r.json())
-        .then(rows => {
-            const div = document.getElementById("resaList");
-            div.innerHTML = rows.map(r => `
-                <div class="resa-item">
-                    <b>${r.date}</b><br>
-                    ${r.name} — ${r.email}<br>
-                    ${r.nights} nuit(s) — ${r.price} €
-                </div>
-            `).join("");
-        });
+  data.forEach(r => {
+    table.innerHTML += `
+      <tr>
+        <td>${r.id}</td>
+        <td>${r.date}</td>
+        <td>${r.name}</td>
+        <td>${r.email}</td>
+        <td>${r.nights}</td>
+        <td>${r.price}</td>
+      </tr>
+    `;
+  });
 }
 </script>
 
