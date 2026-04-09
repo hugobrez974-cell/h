@@ -177,7 +177,7 @@ async function payer() {
   if (!nom.value || !email.value) return alert("Merci de renseigner votre nom et votre email.");
   if (prix <= 0) return alert("Dates invalides");
 
-  const res = await fetch("/api/checkout", {
+  const res = await fetch("https://h-e5oa.onrender.com/create-checkout-session"), {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({
