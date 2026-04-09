@@ -7,8 +7,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 
-// --- MIDDLEWARES ---
-// Webhook Stripe : RAW body uniquement sur /webhook
+// Stripe Webhook doit lire le RAW body
 app.post("/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
 
 // Le reste en JSON normal
@@ -43,6 +42,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// --- FACTURE HTML ---
 function generateInvoiceHTML(resa) {
   return `
   <html>
@@ -90,14 +90,13 @@ async function sendReservationEmail(resa) {
   });
 }
 
-// --- ROUTE : DISPONIBILITÉS ---
+// --- DISPONIBILITÉS ---
 app.get("/api/disponibilites", (req, res) => {
   const rows = db.prepare("SELECT date FROM reservations").all();
-  const dates = rows.map(r => r.date);
-  res.json({ dates });
+  res.json({ dates: rows.map(r => r.date) });
 });
 
-// --- ROUTE : CRÉER SESSION STRIPE ---
+// --- CRÉATION SESSION STRIPE ---
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const { date, name, email, nights, price } = req.body;
@@ -130,7 +129,7 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-// --- WEBHOOK STRIPE (handler utilisé plus haut) ---
+// --- WEBHOOK STRIPE ---
 function handleStripeWebhook(req, res) {
   const sig = req.headers["stripe-signature"];
 
@@ -171,22 +170,20 @@ function handleStripeWebhook(req, res) {
   res.json({ received: true });
 }
 
-// --- ADMIN : LOGIN ---
+// --- ADMIN LOGIN ---
 app.post("/admin/login", (req, res) => {
   const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
-    return res.json({ success: true });
-  }
+  if (password === ADMIN_PASSWORD) return res.json({ success: true });
   res.status(401).json({ success: false, error: "Mot de passe incorrect" });
 });
 
-// --- ADMIN : LISTE RÉSA ---
+// --- ADMIN LISTE RÉSA ---
 app.get("/admin/reservations", (req, res) => {
   const rows = db.prepare("SELECT * FROM reservations ORDER BY date ASC").all();
   res.json(rows);
 });
 
-// --- ADMIN : AJOUT RÉSA MANUELLE ---
+// --- ADMIN AJOUT RÉSA ---
 app.post("/admin/add-reservation", async (req, res) => {
   const { password, date, name, email, nights, price } = req.body;
 
