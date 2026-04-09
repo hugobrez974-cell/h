@@ -1,21 +1,24 @@
 const express = require("express");
 const cors = require("cors");
-const sqlite3 = require("sqlite3").verbose();
 const bodyParser = require("body-parser");
+const Database = require("better-sqlite3");
 const nodemailer = require("nodemailer");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 const app = express();
 
-// Stripe Webhook doit lire le RAW body
-app.use("/webhook", express.raw({ type: "application/json" }));
+// --- MIDDLEWARES ---
+// Webhook Stripe : RAW body uniquement sur /webhook
+app.post("/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
 
+// Le reste en JSON normal
 app.use(cors());
 app.use(bodyParser.json());
 
 // --- DB ---
-const db = new sqlite3.Database("./database.db");
+const db = new Database("./database.db");
 
-db.run(`
+db.prepare(`
   CREATE TABLE IF NOT EXISTS reservations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT NOT NULL,
@@ -26,7 +29,10 @@ db.run(`
     admin_block INTEGER DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   )
-`);
+`).run();
+
+// --- ADMIN ---
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin974";
 
 // --- EMAIL ---
 const transporter = nodemailer.createTransport({
@@ -37,7 +43,6 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// --- FACTURE HTML ---
 function generateInvoiceHTML(resa) {
   return `
   <html>
@@ -53,11 +58,11 @@ function generateInvoiceHTML(resa) {
 
       <ul>
         <li><b>Date d'arrivée :</b> ${resa.date}</li>
-        <li><b>Nuits :</b> ${resa.nights}</li>
-        <li><b>Total :</b> ${resa.price} €</li>
+        <li><b>Nombre de nuits :</b> ${resa.nights}</li>
+        <li><b>Montant total :</b> ${resa.price} €</li>
       </ul>
 
-      <p>Nous avons hâte de vous accueillir.</p>
+      <p>Nous avons hâte de vous accueillir dans nos tonneaux.</p>
 
       <p style="text-align:center; margin-top:30px;">
         Merci pour votre confiance,<br>
@@ -85,36 +90,48 @@ async function sendReservationEmail(resa) {
   });
 }
 
-// --- CRÉATION SESSION STRIPE ---
-app.post("/create-checkout-session", async (req, res) => {
-  const { date, name, email, nights, price } = req.body;
-
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    mode: "payment",
-    customer_email: email,
-    line_items: [
-      {
-        price_data: {
-          currency: "eur",
-          product_data: {
-            name: `Réservation Tonneaux des Ô (${date})`
-          },
-          unit_amount: price * 100
-        },
-        quantity: 1
-      }
-    ],
-    metadata: { date, name, email, nights, price },
-    success_url: process.env.SUCCESS_URL,
-    cancel_url: process.env.CANCEL_URL
-  });
-
-  res.json({ url: session.url });
+// --- ROUTE : DISPONIBILITÉS ---
+app.get("/api/disponibilites", (req, res) => {
+  const rows = db.prepare("SELECT date FROM reservations").all();
+  const dates = rows.map(r => r.date);
+  res.json({ dates });
 });
 
-// --- WEBHOOK STRIPE ---
-app.post("/webhook", (req, res) => {
+// --- ROUTE : CRÉER SESSION STRIPE ---
+app.post("/create-checkout-session", async (req, res) => {
+  try {
+    const { date, name, email, nights, price } = req.body;
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      customer_email: email,
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `Réservation Tonneaux des Ô (${date})`
+            },
+            unit_amount: Math.round(price * 100)
+          },
+          quantity: 1
+        }
+      ],
+      metadata: { date, name, email, nights: String(nights), price: String(price) },
+      success_url: process.env.SUCCESS_URL,
+      cancel_url: process.env.CANCEL_URL
+    });
+
+    res.json({ url: session.url });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Erreur création session Stripe" });
+  }
+});
+
+// --- WEBHOOK STRIPE (handler utilisé plus haut) ---
+function handleStripeWebhook(req, res) {
   const sig = req.headers["stripe-signature"];
 
   let event;
@@ -125,6 +142,7 @@ app.post("/webhook", (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (err) {
+    console.error("Webhook error:", err.message);
     return res.status(400).send(`Webhook error: ${err.message}`);
   }
 
@@ -135,32 +153,66 @@ app.post("/webhook", (req, res) => {
       date: s.metadata.date,
       name: s.metadata.name,
       email: s.metadata.email,
-      nights: parseInt(s.metadata.nights),
+      nights: parseInt(s.metadata.nights, 10),
       price: parseFloat(s.metadata.price)
     };
 
-    db.run(
-      "INSERT INTO reservations (date, name, email, nights, price) VALUES (?, ?, ?, ?, ?)",
-      [resa.date, resa.name, resa.email, resa.nights, resa.price],
-      function (err) {
-        if (!err) {
-          resa.id = this.lastID;
-          sendReservationEmail(resa);
-        }
-      }
-    );
+    const stmt = db.prepare(`
+      INSERT INTO reservations (date, name, email, nights, price)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const info = stmt.run(resa.date, resa.name, resa.email, resa.nights, resa.price);
+    resa.id = info.lastInsertRowid;
+
+    sendReservationEmail(resa).catch(err => console.error("Erreur email:", err));
   }
 
   res.json({ received: true });
+}
+
+// --- ADMIN : LOGIN ---
+app.post("/admin/login", (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) {
+    return res.json({ success: true });
+  }
+  res.status(401).json({ success: false, error: "Mot de passe incorrect" });
 });
 
-// --- DISPONIBILITÉS ---
-app.get("/api/disponibilites", (req, res) => {
-  db.all("SELECT date FROM reservations", [], (err, rows) => {
-    const dates = rows.map(r => r.date);
-    res.json({ dates });
-  });
+// --- ADMIN : LISTE RÉSA ---
+app.get("/admin/reservations", (req, res) => {
+  const rows = db.prepare("SELECT * FROM reservations ORDER BY date ASC").all();
+  res.json(rows);
 });
 
+// --- ADMIN : AJOUT RÉSA MANUELLE ---
+app.post("/admin/add-reservation", async (req, res) => {
+  const { password, date, name, email, nights, price } = req.body;
+
+  if (password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Accès refusé" });
+  }
+
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO reservations (date, name, email, nights, price)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    const info = stmt.run(date, name, email, nights, price);
+
+    const resa = { id: info.lastInsertRowid, date, name, email, nights, price };
+    await sendReservationEmail(resa);
+
+    res.json({ success: true, reservation: resa });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Erreur DB" });
+  }
+});
+
+// --- SERVER ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Serveur OK sur port " + PORT));
+app.listen(PORT, () => {
+  console.log("Serveur lancé sur le port " + PORT);
+});
