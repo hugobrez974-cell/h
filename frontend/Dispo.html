@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Disponibilités – Les tonneaux des Ô </title>
+  <title>Disponibilités – Les tonneaux des Ô</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
@@ -52,21 +52,21 @@
     .btn-retour:hover {
       background:#8fb48a;
     }
+
     .alert-construction {
-  background: #f7d7a6;
-  color: #5a3e1b;
-  padding: 1rem;
-  border-radius: 0.6rem;
-  margin: 1rem 0;
-  font-weight: 700;
-  border: 2px solid #e6b97c;
-}
+      background: #f7d7a6;
+      color: #5a3e1b;
+      padding: 1rem;
+      border-radius: 0.6rem;
+      margin: 1rem 0;
+      font-weight: 700;
+      border: 2px solid #e6b97c;
+    }
   </style>
 </head>
 <body>
 
-<button onclick="window.location.href='/main.html'" 
-        class="btn-retour">
+<button onclick="window.location.href='/main.html'" class="btn-retour">
   Aller à l'accueil
 </button>
 
@@ -121,43 +121,38 @@ anneeSelect.value = currentYear;
 
 async function loadCalendar() {
   const bungalow = bungalowSelect.value;
-  const res = await fetch(`https://h-e5oa.onrender.com/api/disponibilites?bungalow=${bungalow}`);
-  const ranges = await res.json();
 
-  const busy = new Set();
-  ranges.forEach(r => {
-    let d = new Date(r.debut);
-    const end = new Date(r.fin);
-    while (d <= end) {
-      busy.add(d.toISOString().split("T")[0]);
-      d.setDate(d.getDate()+1);
-    }
-  });
+  // 🔥 Correction fetchfetch → fetch
+  const res = await fetch(`https://h-e5oa.onrender.com/api/disponibilites?bungalow=${bungalow}`);
+  const dates = await res.json(); // tableau de dates simples
+
+  // 🔥 Convertir en Set pour accès rapide
+  const busy = new Set(dates);
 
   const month = parseInt(moisSelect.value);
   const year = parseInt(anneeSelect.value);
 
   const first = new Date(year, month, 1);
-  const last = new Date(year, month+1, 0);
+  const last = new Date(year, month + 1, 0);
 
   const cal = document.getElementById("calendar");
   cal.innerHTML = "";
 
-  ["L","M","M","J","V","S","D"].forEach(j=>{
-    const h=document.createElement("div");
-    h.textContent=j;
-    h.className="head";
+  ["L","M","M","J","V","S","D"].forEach(j => {
+    const h = document.createElement("div");
+    h.textContent = j;
+    h.className = "head";
     cal.appendChild(h);
   });
 
-  let start = (first.getDay()+6)%7;
-  for(let i=0;i<start;i++){
-    const cell=document.createElement("div");
-    cell.className="off";
+  let start = (first.getDay() + 6) % 7;
+  for (let i = 0; i < start; i++) {
+    const cell = document.createElement("div");
+    cell.className = "off";
     cal.appendChild(cell);
   }
 
-  for(let d=1; d<=last.getDate(); d++){
+  for (let d = 1; d <= last.getDate(); d++) {
     const date = new Date(year, month, d);
     const iso = date.toISOString().split("T")[0];
     const cell = document.createElement("div");
@@ -176,15 +171,17 @@ async function loadCalendar() {
 
   const liste = document.getElementById("liste");
   let html = "<h2>Dates réservées</h2>";
-  if (ranges.length === 0) {
+
+  if (dates.length === 0) {
     html += "<p>Aucune réservation pour le moment.</p>";
   } else {
     html += "<ul>";
-    ranges.forEach(r=>{
-      html += `<li>Du ${r.debut} au ${r.fin}</li>`;
+    dates.forEach(d => {
+      html += `<li>${d}</li>`;
     });
     html += "</ul>";
   }
+
   liste.innerHTML = html;
 }
 
