@@ -121,7 +121,7 @@ anneeSelect.value = currentYear;
 
 async function loadCalendar() {
   const bungalow = bungalowSelect.value;
-  const res = await fetch(`https://h-e5oa.onrender.com/api/disponibilites?bungalow=${encodeURIComponent(bungalow)}`);
+  const res = await fetch(`https://h-e5oa.onrender.com/api/disponibilites${encodeURIComponent(bungalow)}`);
   const ranges = await res.json();
 
   const busy = new Set();
