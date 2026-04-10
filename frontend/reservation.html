@@ -67,7 +67,7 @@
       border-radius: 999px;
       font-weight: 700;
       font-size: 1.1rem;
-      border: 2px solid var(--bois); /* BORDURE AUTOUR DU BOUTON */
+      border: 2px solid var(--bois);
       cursor: pointer;
     }
 
@@ -117,13 +117,13 @@
   <input type="email" id="email">
 
   <label>Date d'arrivée</label>
-  <input type="date" id="date">
+  <input type="date" id="dateArrivee">
 
-  <label>Nuits</label>
-  <input type="number" id="nights" value="1" min="1">
+  <label>Date de départ</label>
+  <input type="date" id="dateDepart">
 
   <label>Prix total (€)</label>
-  <input type="number" id="price" value="120" readonly>
+  <input type="number" id="price" value="0" readonly>
 
   <button class="btn" onclick="payer()">Payer</button>
 
@@ -137,23 +137,41 @@
 <script>
   const PRIX_NUIT = 120;
 
-  document.getElementById("nights").addEventListener("input", () => {
-    const nuits = Math.max(1, parseInt(document.getElementById("nights").value));
-    document.getElementById("price").value = nuits * PRIX_NUIT;
-  });
+  function calculerPrix() {
+    const d1 = new Date(document.getElementById("dateArrivee").value);
+    const d2 = new Date(document.getElementById("dateDepart").value);
+
+    if (isNaN(d1) || isNaN(d2)) return;
+
+    const diff = (d2 - d1) / (1000 * 60 * 60 * 24);
+
+    if (diff > 0) {
+      document.getElementById("price").value = diff * PRIX_NUIT;
+    } else {
+      document.getElementById("price").value = 0;
+    }
+  }
+
+  document.getElementById("dateArrivee").addEventListener("change", calculerPrix);
+  document.getElementById("dateDepart").addEventListener("change", calculerPrix);
 
   async function payer() {
     const data = {
       bungalow: document.getElementById("bungalow").value,
       name: document.getElementById("name").value.trim(),
       email: document.getElementById("email").value.trim(),
-      date: document.getElementById("date").value,
-      nights: parseInt(document.getElementById("nights").value),
+      dateArrivee: document.getElementById("dateArrivee").value,
+      dateDepart: document.getElementById("dateDepart").value,
       price: parseInt(document.getElementById("price").value)
     };
 
-    if (!data.name || !data.email || !data.date) {
+    if (!data.name || !data.email || !data.dateArrivee || !data.dateDepart) {
       showError("Merci de remplir tous les champs.");
+      return;
+    }
+
+    if (data.price <= 0) {
+      showError("La date de départ doit être après la date d'arrivée.");
       return;
     }
 
