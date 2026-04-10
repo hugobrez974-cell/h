@@ -119,14 +119,36 @@ for (let y = currentYear; y <= currentYear + 5; y++) {
 moisSelect.value = new Date().getMonth();
 anneeSelect.value = currentYear;
 
+// Lecture d'un fichier ICS et extraction des dates (DTSTART)
+async function lireICS(url) {
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  const text = await res.text();
+
+  const lignes = text.split("\n");
+  const dates = [];
+
+  for (const l of lignes) {
+    if (l.startsWith("DTSTART")) {
+      const raw = l.split(":")[1].trim();
+      const iso = raw.substring(0, 8); // YYYYMMDD
+      const y = iso.substring(0, 4);
+      const m = iso.substring(4, 6);
+      const d = iso.substring(6, 8);
+      dates.push(`${y}-${m}-${d}`);
+    }
+  }
+
+  return dates;
+}
+
 async function loadCalendar() {
   const bungalow = bungalowSelect.value;
 
-  // 🔥 Correction fetchfetch → fetch
-  const res = await fetch(`https://h-e5oa.onrender.com/api/disponibilites?bungalow=${bungalow}`);
-  const dates = await res.json(); // tableau de dates simples
+  // URL ICS sur le backend
+  const urlICS = `https://h-e5oa.onrender.com/icals/${bungalow}.ics`;
 
-  // 🔥 Convertir en Set pour accès rapide
+  const dates = await lireICS(urlICS);
   const busy = new Set(dates);
 
   const month = parseInt(moisSelect.value);
