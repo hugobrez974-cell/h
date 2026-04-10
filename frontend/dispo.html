@@ -52,16 +52,6 @@
     .btn-retour:hover {
       background:#8fb48a;
     }
-
-    .alert-construction {
-      background: #f7d7a6;
-      color: #5a3e1b;
-      padding: 1rem;
-      border-radius: 0.6rem;
-      margin: 1rem 0;
-      font-weight: 700;
-      border: 2px solid #e6b97c;
-    }
   </style>
 </head>
 <body>
@@ -119,7 +109,7 @@ for (let y = currentYear; y <= currentYear + 5; y++) {
 moisSelect.value = new Date().getMonth();
 anneeSelect.value = currentYear;
 
-// Lecture d'un fichier ICS et extraction des dates (DTSTART)
+// Lecture ICS
 async function lireICS(url) {
   const res = await fetch(url);
   if (!res.ok) return [];
@@ -131,7 +121,7 @@ async function lireICS(url) {
   for (const l of lignes) {
     if (l.startsWith("DTSTART")) {
       const raw = l.split(":")[1].trim();
-      const iso = raw.substring(0, 8); // YYYYMMDD
+      const iso = raw.substring(0, 8);
       const y = iso.substring(0, 4);
       const m = iso.substring(4, 6);
       const d = iso.substring(6, 8);
@@ -145,7 +135,6 @@ async function lireICS(url) {
 async function loadCalendar() {
   const bungalow = bungalowSelect.value;
 
-  // URL ICS sur le backend
   const urlICS = `https://h-e5oa.onrender.com/icals/${bungalow}.ics`;
 
   const dates = await lireICS(urlICS);
@@ -213,11 +202,6 @@ anneeSelect.addEventListener("change", loadCalendar);
 
 loadCalendar();
 </script>
-
-<div class="alert-construction">
-  ⚠️ Le site et le système de paiement sont toujours en construction.  
-  Les fonctionnalités peuvent être limitées.
-</div>
 
 </body>
 </html>
