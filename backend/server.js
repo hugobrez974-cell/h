@@ -25,7 +25,7 @@ app.use(express.json());
 // -------------------------
 // 🔥 ROUTE ICS (dans /icals)
 // -------------------------
-app.get("/:bungalow.ics", (req, res) => {
+app.get("/icals/:bungalow.ics", (req, res) => {
   const filePath = path.join(__dirname, "icals", `${req.params.bungalow}.ics`);
 
   if (!fs.existsSync(filePath)) {
