@@ -11,20 +11,16 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// -------------------------
-// 🔥 CORS : autorise ton frontend
-// -------------------------
+// CORS
 app.use(cors({
-  origin: "https://h-1-y7xu.onrender.com", // TON FRONTEND
+  origin: "https://h-1-y7xu.onrender.com",
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"]
 }));
 
 app.use(express.json());
 
-// -------------------------
-// 🔥 ROUTE ICS (dans /icals)
-// -------------------------
+// 🔥 ROUTE ICS (OBLIGATOIRE)
 app.get("/icals/:bungalow.ics", (req, res) => {
   const filePath = path.join(__dirname, "icals", `${req.params.bungalow}.ics`);
 
@@ -36,9 +32,7 @@ app.get("/icals/:bungalow.ics", (req, res) => {
   res.send(fs.readFileSync(filePath, "utf8"));
 });
 
-// -------------------------
-// 🔥 ROUTE STRIPE CHECKOUT
-// -------------------------
+// 🔥 STRIPE CHECKOUT
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
     const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
@@ -66,13 +60,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
       ],
       success_url: "https://h-1-y7xu.onrender.com/success.html",
       cancel_url: "https://h-1-y7xu.onrender.com/cancel.html",
-      metadata: {
-        bungalow,
-        name,
-        email,
-        dateArrivee,
-        dateDepart
-      }
+      metadata: { bungalow, name, email, dateArrivee, dateDepart }
     });
 
     res.json({ url: session.url });
@@ -83,9 +71,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
   }
 });
 
-// -------------------------
-// 🔥 LANCEMENT SERVEUR
-// -------------------------
+// LANCEMENT SERVEUR
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log("Backend en ligne sur le port", PORT);
