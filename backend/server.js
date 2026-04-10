@@ -11,7 +11,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// -------------------------
 // CORS
+// -------------------------
 app.use(cors({
   origin: "https://h-1-y7xu.onrender.com",
   methods: ["GET", "POST"],
@@ -20,7 +22,9 @@ app.use(cors({
 
 app.use(express.json());
 
-// 🔥 ROUTE ICS (OBLIGATOIRE)
+// -------------------------
+// 🔥 ROUTE ICS
+// -------------------------
 app.get("/icals/:bungalow.ics", (req, res) => {
   const filePath = path.join(__dirname, "icals", `${req.params.bungalow}.ics`);
 
@@ -32,7 +36,52 @@ app.get("/icals/:bungalow.ics", (req, res) => {
   res.send(fs.readFileSync(filePath, "utf8"));
 });
 
+// -------------------------
+// 🔥 ROUTE : Voir les réservations
+// -------------------------
+app.get("/api/reservations", (req, res) => {
+  const filePath = path.join(__dirname, "data.json");
+
+  if (!fs.existsSync(filePath)) {
+    return res.json([]);
+  }
+
+  const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  res.json(data);
+});
+
+// -------------------------
+// 🔥 ROUTE : Bloquer une date (admin)
+// -------------------------
+app.post("/api/block-date", (req, res) => {
+  const { bungalow, date } = req.body;
+
+  if (!bungalow || !date) {
+    return res.status(400).json({ message: "Champs manquants" });
+  }
+
+  const filePath = path.join(__dirname, "icals", `${bungalow}.ics`);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ message: "ICS introuvable" });
+  }
+
+  const event = `
+BEGIN:VEVENT
+DTSTART:${date.replace(/-/g,"")}T120000Z
+DTEND:${date.replace(/-/g,"")}T130000Z
+SUMMARY:Bloqué
+END:VEVENT
+`;
+
+  fs.appendFileSync(filePath, event);
+
+  res.json({ message: "Date bloquée !" });
+});
+
+// -------------------------
 // 🔥 STRIPE CHECKOUT
+// -------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
     const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
@@ -41,6 +90,27 @@ app.post("/api/create-checkout-session", async (req, res) => {
       return res.status(400).json({ error: "Champs manquants" });
     }
 
+    // Enregistrer la réservation dans data.json
+    const filePath = path.join(__dirname, "data.json");
+    let data = [];
+
+    if (fs.existsSync(filePath)) {
+      data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    }
+
+    data.push({
+      bungalow,
+      name,
+      email,
+      dateArrivee,
+      dateDepart,
+      price,
+      createdAt: new Date().toISOString()
+    });
+
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+    // Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -71,7 +141,9 @@ app.post("/api/create-checkout-session", async (req, res) => {
   }
 });
 
+// -------------------------
 // LANCEMENT SERVEUR
+// -------------------------
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log("Backend en ligne sur le port", PORT);
