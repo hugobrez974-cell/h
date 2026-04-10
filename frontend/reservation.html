@@ -11,7 +11,6 @@
       --sable: #F4E9D8;
       --vert: #A7C4A0;
       --blanc: #d6c7a0;
-      --or: #D9B77A;
       --texte: #3A2F25;
     }
 
@@ -74,27 +73,11 @@
 
     .btn:hover { filter: brightness(1.05); }
 
-    .back {
-      display: block;
-      text-align: center;
-      margin-top: 1rem;
-      color: var(--bois);
-      font-weight: 600;
-      text-decoration: underline;
-    }
-
     .error {
       margin-top: 1rem;
       color: red;
       text-align: center;
       display: none;
-    }
-
-    .phone {
-      margin-top: 1.5rem;
-      text-align: center;
-      font-weight: 600;
-      color: var(--bois);
     }
   </style>
 </head>
@@ -128,83 +111,103 @@
 
   <button class="btn" onclick="payer()">Payer</button>
 
-  <a href="main.html" class="back">← Retour à l’accueil</a>
-
-  <div class="phone">📞 +262 693 63 66 81</div>
-
   <div id="error" class="error"></div>
 </div>
 
 <script>
-  function calculerPrix() {
-    const d1 = new Date(document.getElementById("dateArrivee").value);
-    const d2 = new Date(document.getElementById("dateDepart").value);
+// -----------------------------
+// 🔥 Pré-remplissage depuis Dispo.html
+// -----------------------------
+const params = new URLSearchParams(window.location.search);
+const bungalow = params.get("bungalow");
+const date = params.get("date");
 
-    if (isNaN(d1) || isNaN(d2)) return;
+if (bungalow) {
+  document.getElementById("bungalow").value = bungalow;
+}
 
-    let total = 0;
+if (date) {
+  document.getElementById("dateArrivee").value = date;
 
-    for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
-      const jour = d.getDay(); // 0=dimanche, 5=vendredi, 6=samedi
-      if (jour === 5 || jour === 6) {
-        total += 150;
-      } else {
-        total += 130;
-      }
-    }
+  const d = new Date(date);
+  d.setDate(d.getDate() + 1);
+  const iso = d.toISOString().split("T")[0];
+  document.getElementById("dateDepart").value = iso;
+}
 
-    document.getElementById("price").value = total;
+// -----------------------------
+// 🔥 Calcul du prix variable
+// -----------------------------
+function calculerPrix() {
+  const d1 = new Date(document.getElementById("dateArrivee").value);
+  const d2 = new Date(document.getElementById("dateDepart").value);
+
+  if (isNaN(d1) || isNaN(d2)) return;
+
+  let total = 0;
+
+  for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
+    const jour = d.getDay(); // 5 = vendredi, 6 = samedi
+    total += (jour === 5 || jour === 6) ? 150 : 130;
   }
 
-  document.getElementById("dateArrivee").addEventListener("change", calculerPrix);
-  document.getElementById("dateDepart").addEventListener("change", calculerPrix);
+  document.getElementById("price").value = total;
+}
 
-  async function payer() {
-    const data = {
-      bungalow: document.getElementById("bungalow").value,
-      name: document.getElementById("name").value.trim(),
-      email: document.getElementById("email").value.trim(),
-      dateArrivee: document.getElementById("dateArrivee").value,
-      dateDepart: document.getElementById("dateDepart").value,
-      price: parseInt(document.getElementById("price").value)
-    };
+document.getElementById("dateArrivee").addEventListener("change", calculerPrix);
+document.getElementById("dateDepart").addEventListener("change", calculerPrix);
 
-    if (!data.name || !data.email || !data.dateArrivee || !data.dateDepart) {
-      showError("Merci de remplir tous les champs.");
+setTimeout(calculerPrix, 200);
+
+// -----------------------------
+// 🔥 Paiement Stripe
+// -----------------------------
+async function payer() {
+  const data = {
+    bungalow: document.getElementById("bungalow").value,
+    name: document.getElementById("name").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    dateArrivee: document.getElementById("dateArrivee").value,
+    dateDepart: document.getElementById("dateDepart").value,
+    price: parseInt(document.getElementById("price").value)
+  };
+
+  if (!data.name || !data.email || !data.dateArrivee || !data.dateDepart) {
+    showError("Merci de remplir tous les champs.");
+    return;
+  }
+
+  if (data.price <= 0) {
+    showError("La date de départ doit être après la date d'arrivée.");
+    return;
+  }
+
+  try {
+    const res = await fetch("https://h-e5oa.onrender.com/api/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    const json = await res.json();
+
+    if (!json.url) {
+      showError("Erreur lors de la création du paiement.");
       return;
     }
 
-    if (data.price <= 0) {
-      showError("La date de départ doit être après la date d'arrivée.");
-      return;
-    }
+    window.location.href = json.url;
 
-    try {
-      const res = await fetch("https://h-e5oa.onrender.com/api/create-checkout-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-
-      const json = await res.json();
-
-      if (!json.url) {
-        showError("Erreur lors de la création du paiement.");
-        return;
-      }
-
-      window.location.href = json.url;
-
-    } catch (e) {
-      showError("Impossible de contacter le serveur.");
-    }
+  } catch (e) {
+    showError("Impossible de contacter le serveur.");
   }
+}
 
-  function showError(msg) {
-    const box = document.getElementById("error");
-    box.textContent = msg;
-    box.style.display = "block";
-  }
+function showError(msg) {
+  const box = document.getElementById("error");
+  box.textContent = msg;
+  box.style.display = "block";
+}
 </script>
 
 </body>
