@@ -67,7 +67,7 @@
       border-radius: 999px;
       font-weight: 700;
       font-size: 1.1rem;
-      border: none;
+      border: 2px solid var(--bois); /* BORDURE AUTOUR DU BOUTON */
       cursor: pointer;
     }
 
@@ -87,6 +87,13 @@
       color: red;
       text-align: center;
       display: none;
+    }
+
+    .phone {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-weight: 600;
+      color: var(--bois);
     }
   </style>
 </head>
@@ -121,6 +128,8 @@
   <button class="btn" onclick="payer()">Payer</button>
 
   <a href="main.html" class="back">← Retour à l’accueil</a>
+
+  <div class="phone">📞 +262 693 63 66 81</div>
 
   <div id="error" class="error"></div>
 </div>
