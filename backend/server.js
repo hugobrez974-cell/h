@@ -11,9 +11,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// -------------------------
 // CORS
-// -------------------------
 app.use(cors({
   origin: "https://h-1-y7xu.onrender.com",
   methods: ["GET", "POST"],
@@ -22,9 +20,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// -------------------------
-// 🔥 ROUTE ICS
-// -------------------------
+// 🔥 ICS : /icals/bungalow1.ics, /icals/bungalow2.ics
 app.get("/icals/:bungalow.ics", (req, res) => {
   const filePath = path.join(__dirname, "icals", `${req.params.bungalow}.ics`);
 
@@ -36,9 +32,7 @@ app.get("/icals/:bungalow.ics", (req, res) => {
   res.send(fs.readFileSync(filePath, "utf8"));
 });
 
-// -------------------------
-// 🔥 ROUTE : Voir les réservations
-// -------------------------
+// Voir les réservations (admin)
 app.get("/api/reservations", (req, res) => {
   const filePath = path.join(__dirname, "data.json");
 
@@ -50,9 +44,7 @@ app.get("/api/reservations", (req, res) => {
   res.json(data);
 });
 
-// -------------------------
-// 🔥 ROUTE : Bloquer une date (admin)
-// -------------------------
+// Bloquer une date (admin)
 app.post("/api/block-date", (req, res) => {
   const { bungalow, date } = req.body;
 
@@ -79,9 +71,7 @@ END:VEVENT
   res.json({ message: "Date bloquée !" });
 });
 
-// -------------------------
-// 🔥 STRIPE CHECKOUT
-// -------------------------
+// Stripe checkout
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
     const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
@@ -90,7 +80,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
       return res.status(400).json({ error: "Champs manquants" });
     }
 
-    // Enregistrer la réservation dans data.json
+    // Sauvegarde dans data.json
     const filePath = path.join(__dirname, "data.json");
     let data = [];
 
@@ -110,7 +100,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 
-    // Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -141,9 +130,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
   }
 });
 
-// -------------------------
-// LANCEMENT SERVEUR
-// -------------------------
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log("Backend en ligne sur le port", PORT);
