@@ -2,52 +2,320 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Réserver</title>
+  <title>Réserver – Les Tonneaux des Ô</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: #141821;
+      --accent: #f4c27a;
+      --accent-soft: #f4c27a22;
+      --text: #f7f7f7;
+      --muted: #9ca3af;
+      --danger: #f97373;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1f2933 0, #020308 55%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      width: 100%;
+      max-width: 900px;
+      padding: 20px 20px 0;
+    }
+
+    .logo {
+      font-size: 1.4rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    main {
+      width: 100%;
+      max-width: 900px;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: linear-gradient(145deg, #151823, #0f1119);
+      border-radius: 18px;
+      padding: 22px 20px 20px;
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.75),
+        0 0 0 1px rgba(148, 163, 184, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .card h1 {
+      font-size: 1.4rem;
+      margin-bottom: 4px;
+    }
+
+    .card p.lead {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .field {
+      margin-bottom: 12px;
+      width: 100%;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-soft);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    input[readonly] {
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--muted);
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .price-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .price-line span {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .btn {
+      margin-top: 14px;
+      width: 100%;
+      padding: 11px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #f4c27a, #f59e0b);
+      color: #1f2933;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow:
+        0 14px 30px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(148, 163, 184, 0.3);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+      box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(248, 250, 252, 0.18);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow:
+        0 10px 24px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(148, 163, 184, 0.3);
+    }
+
+    .error {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--danger);
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 10px 20px 18px;
+      width: 100%;
+      max-width: 900px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .card {
+        padding: 18px 16px 16px;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<h1>Réservation</h1>
+<header>
+  <div class="logo">Les Tonneaux des Ô</div>
+  <div class="subtitle">Réservation sécurisée – Bungalows en cocon</div>
+</header>
 
-<form id="resaForm">
-  <label>Nom :</label>
-  <input type="text" id="name" required>
+<main>
+  <div class="card">
+    <h1>Réserver votre séjour</h1>
+    <p class="lead">
+      Choisissez votre bungalow, vos dates et laissez-vous porter. Le paiement est sécurisé par Stripe.
+    </p>
 
-  <label>Email :</label>
-  <input type="email" id="email" required>
+    <div class="field">
+      <label for="bungalow">Bungalow</label>
+      <select id="bungalow">
+        <option value="bungalow1">Bungalow 1 – Vue montagne</option>
+        <option value="bungalow2">Bungalow 2 – Vue vallée</option>
+      </select>
+    </div>
 
-  <label>Date :</label>
-  <input type="date" id="date" required>
+    <div class="field">
+      <label for="name">Nom complet</label>
+      <input type="text" id="name" placeholder="Nom et prénom">
+    </div>
 
-  <label>Nuits :</label>
-  <input type="number" id="nights" value="1" min="1" required>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="vous@example.com">
+      <div class="hint">Vous recevrez la confirmation et les détails de votre séjour à cette adresse.</div>
+    </div>
 
-  <label>Prix total (€) :</label>
-  <input type="number" id="price" value="120" required>
+    <div class="row">
+      <div class="field">
+        <label for="date">Arrivée</label>
+        <input type="date" id="date">
+      </div>
+      <div class="field">
+        <label for="nights">Nuits</label>
+        <input type="number" id="nights" value="1" min="1">
+      </div>
+    </div>
 
-  <button type="submit">Payer</button>
-</form>
+    <div class="field">
+      <label>Prix total</label>
+      <div class="price-line">
+        <input type="number" id="price" value="120" readonly>
+        <span>€ (120 € / nuit)</span>
+      </div>
+    </div>
+
+    <button class="btn" onclick="payer()">Procéder au paiement</button>
+    <div id="error" class="error" style="display:none;"></div>
+  </div>
+</main>
+
+<footer>
+  Les Tonneaux des Ô – Réservation en ligne. Paiement sécurisé, dates synchronisées avec le calendrier.
+</footer>
 
 <script>
-document.getElementById("resaForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+  const PRIX_NUIT = 120;
 
-  const data = {
-    name: document.getElementById("name").value,
-    email: document.getElementById("email").value,
-    date: document.getElementById("date").value,
-    nights: document.getElementById("nights").value,
-    price: document.getElementById("price").value
-  };
+  const nightsInput = document.getElementById("nights");
+  const priceInput = document.getElementById("price");
+  const errorBox = document.getElementById("error");
 
-  const res = await fetch("https://h-e5oa.onrender.com/create-checkout-session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+  nightsInput.addEventListener("input", () => {
+    const nuits = Math.max(1, parseInt(nightsInput.value || "1", 10));
+    nightsInput.value = nuits;
+    priceInput.value = nuits * PRIX_NUIT;
   });
 
-  const json = await res.json();
-  window.location.href = json.url;
-});
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.style.display = "block";
+  }
+
+  function clearError() {
+    errorBox.style.display = "none";
+    errorBox.textContent = "";
+  }
+
+  async function payer() {
+    clearError();
+
+    const data = {
+      bungalow: document.getElementById("bungalow").value,
+      name: document.getElementById("name").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      date: document.getElementById("date").value,
+      nights: parseInt(document.getElementById("nights").value || "1", 10),
+      price: parseInt(document.getElementById("price").value || "0", 10)
+    };
+
+    if (!data.name || !data.email || !data.date) {
+      showError("Merci de remplir tous les champs obligatoires.");
+      return;
+    }
+
+    try {
+      const res = await fetch("https://h-e5oa.onrender.com/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const json = await res.json();
+
+      if (!json || !json.url) {
+        showError("Erreur lors de la création du paiement. Réessayez dans quelques instants.");
+        return;
+      }
+
+      window.location.href = json.url;
+    } catch (e) {
+      showError("Impossible de contacter le serveur de réservation.");
+    }
+  }
 </script>
 
 </body>
