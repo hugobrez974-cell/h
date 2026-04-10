@@ -6,63 +6,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
+    :root {
+      --bois: #5A4633;
+      --sable: #F4E9D8;
+      --vert: #A7C4A0;
+      --blanc: #d6c7a0;
+      --texte: #3A2F25;
+    }
+
     body {
       margin: 0;
-      padding: 0;
-      font-family: system-ui, sans-serif;
-      background: radial-gradient(circle at top, #1f2933 0, #020308 55%, #000 100%);
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      font-family: 'Nunito', sans-serif;
+      background: var(--sable);
+      color: var(--texte);
+      padding: 2rem;
+      text-align: center;
     }
 
     .box {
-      background: rgba(0,0,0,0.55);
-      padding: 25px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 420px;
-      text-align: center;
-      border: 1px solid rgba(255,255,255,0.15);
-      box-shadow: 0 0 18px rgba(0,0,0,0.6);
+      max-width: 450px;
+      margin: auto;
+      background: var(--blanc);
+      padding: 2rem;
+      border-radius: 1rem;
+      border: 2px solid var(--bois);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
     h1 {
-      margin-bottom: 10px;
-      font-size: 1.6rem;
-      color: #f97373;
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      color: #b33a3a;
     }
 
     p {
-      margin-bottom: 20px;
-      color: #ddd;
-      font-size: 1rem;
+      margin-top: 1rem;
+      font-size: 1.2rem;
     }
 
-    a {
-      display: inline-block;
-      padding: 12px 20px;
-      background: #f4c27a;
-      color: #000;
-      border-radius: 8px;
-      font-weight: 600;
+    .btn {
+      display: block;
+      margin: 2rem auto 0;
+      padding: 0.9rem 1.6rem;
+      background: var(--vert);
+      color: var(--bois);
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      border: 2px solid var(--bois);
       text-decoration: none;
-      transition: 0.15s;
+      width: fit-content;
     }
 
-    a:hover {
-      filter: brightness(1.1);
+    .btn:hover { filter: brightness(1.05); }
+
+    .phone {
+      margin-top: 1.5rem;
+      font-weight: 600;
+      color: var(--bois);
     }
   </style>
 </head>
+
 <body>
 
 <div class="box">
   <h1>Paiement annulé</h1>
-  <p>Votre paiement n’a pas été finalisé.<br>Vous pouvez réessayer.</p>
-  <a href="reservation.html">Réessayer</a>
+  <p>Votre paiement n’a pas été finalisé.</p>
+
+  <a href="reservation.html" class="btn">Réessayer</a>
+
+  <div class="phone">📞 +262 693 63 66 81</div>
 </div>
 
 </body>
