@@ -37,28 +37,9 @@
     .off{opacity:0.3;}
     .busy{background:#c97b7b;color:white;}
     .free{background:#a7c4a0;color:#5a4633;cursor:pointer;}
-
-    .btn-retour {
-      display:inline-block;
-      padding:0.6rem 1.2rem;
-      background:#a7c4a0;
-      color:#3A2F25;
-      border:none;
-      border-radius:999px;
-      font-weight:700;
-      cursor:pointer;
-      margin-bottom:1rem;
-    }
-    .btn-retour:hover {
-      background:#8fb48a;
-    }
   </style>
 </head>
 <body>
-
-<button onclick="window.location.href='/main.html'" class="btn-retour">
-  Aller à l'accueil
-</button>
 
 <h1>Disponibilités</h1>
 
@@ -179,21 +160,6 @@ async function loadCalendar() {
     }
     cal.appendChild(cell);
   }
-
-  const liste = document.getElementById("liste");
-  let html = "<h2>Dates réservées</h2>";
-
-  if (dates.length === 0) {
-    html += "<p>Aucune réservation pour le moment.</p>";
-  } else {
-    html += "<ul>";
-    dates.forEach(d => {
-      html += `<li>${d}</li>`;
-    });
-    html += "</ul>";
-  }
-
-  liste.innerHTML = html;
 }
 
 bungalowSelect.addEventListener("change", loadCalendar);
