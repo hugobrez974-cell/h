@@ -1,97 +1,92 @@
-// ===============================
-//  SERVER.JS COMPLET – VERSION FINALE
-// ===============================
+import express from "express";
+import cors from "cors";
+import Stripe from "stripe";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-const axios = require("axios");
-const ical = require("ical");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-app.use(cors());
+// -------------------------
+// 🔥 CORS CONFIG
+// -------------------------
+app.use(cors({
+  origin: "https://h-1-y7xu.onrender.com", // TON FRONTEND
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
+
 app.use(express.json());
 
-// ===============================
-//  SERVIR LES FICHIERS iCal
-// ===============================
-// Tes fichiers sont dans /backend/ical
-// Render ne les sert PAS automatiquement → on le fait ici
-app.use("/ical", express.static(path.join(__dirname, "ical")));
+// -------------------------
+// 🔥 ROUTE : ICS (calendrier)
+// -------------------------
+app.get("/:bungalow.ics", (req, res) => {
+  const filePath = path.join(__dirname, `${req.params.bungalow}.ics`);
 
-// ===============================
-//  URLS DES DEUX BUNGALOWS
-// ===============================
-const ICAL_URLS = {
-  bungalow1: "https://h-e5oa.onrender.com/ical/bungalow1.ics",
-  bungalow2: "https://h-e5oa.onrender.com/ical/bungalow2.ics"
-};
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("ICS introuvable");
+  }
 
-// ===============================
-//  ROUTE DISPONIBILITÉS
-// ===============================
-// Exemple :
-// https://h-e5oa.onrender.com/api/disponibilites?bungalow=bungalow1
-// ===============================
-app.get("/api/disponibilites", async (req, res) => {
+  res.setHeader("Content-Type", "text/calendar");
+  res.send(fs.readFileSync(filePath, "utf8"));
+});
+
+// -------------------------
+// 🔥 ROUTE : CREATE CHECKOUT SESSION
+// -------------------------
+app.post("/api/create-checkout-session", async (req, res) => {
   try {
-    const bungalow = req.query.bungalow || "bungalow1";
+    const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
 
-    if (!ICAL_URLS[bungalow]) {
-      return res.json([]);
+    if (!bungalow || !name || !email || !dateArrivee || !dateDepart || !price) {
+      return res.status(400).json({ error: "Champs manquants" });
     }
 
-    // Télécharger le fichier iCal
-    const response = await axios.get(ICAL_URLS[bungalow]);
-    const data = response.data;
-
-    // Parser le iCal
-    const events = ical.parseICS(data);
-    const dates = [];
-
-    for (const key in events) {
-      const ev = events[key];
-      if (!ev || ev.type !== "VEVENT") continue;
-
-      const start = ev.start;
-      const end = ev.end || ev.start;
-
-      if (!start) continue;
-
-      let d = new Date(start);
-      const last = new Date(end);
-
-      // Si end < start → normaliser
-      if (last < d) last.setTime(d.getTime());
-
-      // Ajouter toutes les dates du séjour
-      while (d <= last) {
-        const iso = d.toISOString().split("T")[0];
-        if (!dates.includes(iso)) dates.push(iso);
-        d.setDate(d.getDate() + 1);
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      customer_email: email,
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `Réservation ${bungalow}`,
+              description: `Du ${dateArrivee} au ${dateDepart}`
+            },
+            unit_amount: price * 100
+          },
+          quantity: 1
+        }
+      ],
+      success_url: "https://h-1-y7xu.onrender.com/success.html",
+      cancel_url: "https://h-1-y7xu.onrender.com/cancel.html",
+      metadata: {
+        bungalow,
+        name,
+        email,
+        dateArrivee,
+        dateDepart
       }
-    }
+    });
 
-    res.json(dates);
+    res.json({ url: session.url });
 
   } catch (err) {
-    console.error("Erreur iCal :", err.message);
-    res.json([]);
+    console.error("Erreur Stripe :", err);
+    res.status(500).json({ error: "Erreur serveur Stripe" });
   }
 });
 
-// ===============================
-//  ROUTE DE TEST
-// ===============================
-app.get("/", (req, res) => {
-  res.send("Backend iCal opérationnel ✔");
-});
-
-// ===============================
-//  LANCEMENT RENDER
-// ===============================
-const PORT = process.env.PORT || 3000;
+// -------------------------
+// 🔥 SERVER START
+// -------------------------
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log("Serveur lancé sur le port " + PORT);
+  console.log("Backend en ligne sur le port", PORT);
 });
