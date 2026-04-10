@@ -2,103 +2,96 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Réserver – Les Tonneaux des Ô</title>
+  <title>Réserver – Les tonneaux des Ô</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
+    :root {
+      --bois: #5A4633;
+      --sable: #F4E9D8;
+      --vert: #A7C4A0;
+      --blanc: #d6c7a0;
+      --or: #D9B77A;
+      --texte: #3A2F25;
+    }
+
     body {
       margin: 0;
-      font-family: system-ui, sans-serif;
-      background: url('bg.jpg') center/cover no-repeat fixed,
-                  radial-gradient(circle at top, #1f2933 0, #020308 55%, #000 100%);
-      color: white;
-    }
-
-    header {
-      padding: 20px;
-      text-align: center;
-      font-size: 1.1rem;
-    }
-
-    header a {
-      color: white;
-      margin: 0 12px;
-      text-decoration: none;
-      font-weight: 500;
+      font-family: 'Nunito', sans-serif;
+      background: var(--sable);
+      color: var(--texte);
+      padding: 2rem;
     }
 
     h1 {
-      text-align: center;
-      margin-top: 40px;
+      font-family: 'Playfair Display', serif;
       font-size: 2rem;
+      color: var(--bois);
+      text-align: center;
+      margin-bottom: 1.5rem;
     }
 
     .container {
-      max-width: 420px;
-      margin: 40px auto;
-      padding: 20px;
+      max-width: 450px;
+      margin: auto;
+      background: var(--blanc);
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
     label {
       display: block;
-      margin-top: 15px;
-      font-size: 1rem;
+      margin-top: 1rem;
+      font-weight: 600;
+      color: var(--bois);
     }
 
     input, select {
       width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border-radius: 6px;
-      border: none;
-      background: rgba(255,255,255,0.15);
-      color: white;
+      padding: 0.8rem;
+      margin-top: 0.4rem;
+      border-radius: 0.6rem;
+      border: 1px solid #c8b894;
+      background: #fff;
       font-size: 1rem;
+      color: var(--texte);
     }
 
     .btn {
-      margin-top: 25px;
+      margin-top: 1.5rem;
       width: 100%;
-      padding: 12px;
-      background: #f4c27a;
-      color: black;
-      border-radius: 6px;
+      padding: 0.9rem;
+      background: var(--vert);
+      color: var(--bois);
+      border-radius: 999px;
+      font-weight: 700;
       font-size: 1.1rem;
-      font-weight: bold;
       border: none;
       cursor: pointer;
     }
 
-    .btn:hover {
-      filter: brightness(1.1);
-    }
+    .btn:hover { filter: brightness(1.05); }
 
     .back {
       display: block;
       text-align: center;
-      margin-top: 20px;
-      color: #f4c27a;
-      text-decoration: none;
-      font-size: 1rem;
+      margin-top: 1rem;
+      color: var(--bois);
+      font-weight: 600;
+      text-decoration: underline;
     }
 
     .error {
-      margin-top: 10px;
-      color: #ff6b6b;
-      font-size: 1rem;
+      margin-top: 1rem;
+      color: red;
       text-align: center;
       display: none;
     }
   </style>
 </head>
-<body>
 
-<header>
-  <a href="main.html">Bungalows</a>
-  <a href="dispo.html">Disponibilités</a>
-  <a href="reservation.html">Réserver</a>
-  <a href="contact.html">Contact</a>
-</header>
+<body>
 
 <h1>Réserver votre séjour</h1>
 
@@ -127,7 +120,7 @@
 
   <button class="btn" onclick="payer()">Payer</button>
 
-  <a class="back" href="main.html">← Retour à l’accueil</a>
+  <a href="main.html" class="back">← Retour à l’accueil</a>
 
   <div id="error" class="error"></div>
 </div>
