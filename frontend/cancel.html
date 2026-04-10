@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Paiement annulé – Les Tonneaux des Ô</title>
+  <title>Paiement annulé</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
@@ -11,64 +11,58 @@
       padding: 0;
       font-family: system-ui, sans-serif;
       background: radial-gradient(circle at top, #1f2933 0, #020308 55%, #000 100%);
-      color: #f7f7f7;
+      color: #fff;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
       min-height: 100vh;
     }
 
-    .container {
-      margin-top: 80px;
-      background: rgba(15, 23, 42, 0.85);
-      padding: 30px 26px;
-      border-radius: 18px;
-      max-width: 480px;
+    .box {
+      background: rgba(0,0,0,0.55);
+      padding: 25px;
+      border-radius: 12px;
       width: 90%;
+      max-width: 420px;
       text-align: center;
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 0 18px rgba(0,0,0,0.6);
     }
 
     h1 {
-      font-size: 1.6rem;
       margin-bottom: 10px;
+      font-size: 1.6rem;
       color: #f97373;
     }
 
     p {
-      color: #d1d5db;
-      font-size: 1rem;
       margin-bottom: 20px;
+      color: #ddd;
+      font-size: 1rem;
     }
 
-    .btn {
+    a {
       display: inline-block;
-      padding: 12px 22px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #f4c27a, #f59e0b);
-      color: #1f2933;
+      padding: 12px 20px;
+      background: #f4c27a;
+      color: #000;
+      border-radius: 8px;
       font-weight: 600;
       text-decoration: none;
-      font-size: 1rem;
-      box-shadow: 0 14px 30px rgba(0,0,0,0.7);
       transition: 0.15s;
     }
 
-    .btn:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.05);
+    a:hover {
+      filter: brightness(1.1);
     }
   </style>
 </head>
 <body>
 
-<div class="container">
+<div class="box">
   <h1>Paiement annulé</h1>
-  <p>Votre paiement n’a pas été finalisé.  
-  Vous pouvez réessayer ou revenir à l’accueil.</p>
-
-  <a href="reservation.html" class="btn">Réessayer</a>
+  <p>Votre paiement n’a pas été finalisé.<br>Vous pouvez réessayer.</p>
+  <a href="reservation.html">Réessayer</a>
 </div>
 
 </body>
