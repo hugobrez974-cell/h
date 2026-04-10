@@ -37,7 +37,7 @@
       background: var(--blanc);
       padding: 2rem;
       border-radius: 1rem;
-      border: 2px solid var(--bois); /* BORDURE FORMULAIRE */
+      border: 2px solid var(--bois);
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
 
@@ -53,7 +53,7 @@
       padding: 0.8rem;
       margin-top: 0.4rem;
       border-radius: 0.6rem;
-      border: 2px solid var(--bois); /* BORDURE CHAMPS */
+      border: 2px solid var(--bois);
       background: #fff;
       font-size: 1rem;
       color: var(--texte);
@@ -68,7 +68,7 @@
       border-radius: 999px;
       font-weight: 700;
       font-size: 1.1rem;
-      border: 2px solid var(--bois); /* BORDURE BOUTON */
+      border: 2px solid var(--bois);
       cursor: pointer;
     }
 
@@ -136,21 +136,24 @@
 </div>
 
 <script>
-  const PRIX_NUIT = 120;
-
   function calculerPrix() {
     const d1 = new Date(document.getElementById("dateArrivee").value);
     const d2 = new Date(document.getElementById("dateDepart").value);
 
     if (isNaN(d1) || isNaN(d2)) return;
 
-    const diff = (d2 - d1) / (1000 * 60 * 60 * 24);
+    let total = 0;
 
-    if (diff > 0) {
-      document.getElementById("price").value = diff * PRIX_NUIT;
-    } else {
-      document.getElementById("price").value = 0;
+    for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
+      const jour = d.getDay(); // 0=dimanche, 5=vendredi, 6=samedi
+      if (jour === 5 || jour === 6) {
+        total += 150;
+      } else {
+        total += 130;
+      }
     }
+
+    document.getElementById("price").value = total;
   }
 
   document.getElementById("dateArrivee").addEventListener("change", calculerPrix);
