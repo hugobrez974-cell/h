@@ -12,7 +12,7 @@ const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // -------------------------
-// 🔥 CORS CONFIG
+// 🔥 CORS : autorise ton frontend
 // -------------------------
 app.use(cors({
   origin: "https://h-1-y7xu.onrender.com", // TON FRONTEND
@@ -23,10 +23,10 @@ app.use(cors({
 app.use(express.json());
 
 // -------------------------
-// 🔥 ROUTE : ICS (calendrier)
+// 🔥 ROUTE ICS (dans /icals)
 // -------------------------
 app.get("/:bungalow.ics", (req, res) => {
-  const filePath = path.join(__dirname, `${req.params.bungalow}.ics`);
+  const filePath = path.join(__dirname, "icals", `${req.params.bungalow}.ics`);
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).send("ICS introuvable");
@@ -37,7 +37,7 @@ app.get("/:bungalow.ics", (req, res) => {
 });
 
 // -------------------------
-// 🔥 ROUTE : CREATE CHECKOUT SESSION
+// 🔥 ROUTE STRIPE CHECKOUT
 // -------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
@@ -84,7 +84,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
 });
 
 // -------------------------
-// 🔥 SERVER START
+// 🔥 LANCEMENT SERVEUR
 // -------------------------
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
