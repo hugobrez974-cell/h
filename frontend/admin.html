@@ -2,60 +2,122 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Admin</title>
+  <title>Admin – Les tonneaux des Ô</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4e9d8;
+      color: #3A2F25;
+      padding: 2rem;
+    }
+    .box {
+      max-width: 400px;
+      margin: auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      border: 2px solid #5A4633;
+    }
+    input, button {
+      width: 100%;
+      padding: 0.8rem;
+      margin-top: 1rem;
+      border-radius: 0.6rem;
+      border: 2px solid #5A4633;
+    }
+    button {
+      background: #A7C4A0;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #admin-panel {
+      display: none;
+      margin-top: 2rem;
+    }
+    .error {
+      color: red;
+      margin-top: 1rem;
+      display: none;
+    }
+  </style>
 </head>
+
 <body>
 
 <h1>Admin</h1>
 
-<input type="password" id="password" placeholder="Mot de passe admin">
-<button onclick="login()">Connexion</button>
+<div class="box" id="login-box">
+  <label>Mot de passe admin</label>
+  <input type="password" id="password">
+  <button onclick="login()">Connexion</button>
+  <div id="error" class="error"></div>
+</div>
 
-<div id="adminPanel" style="display:none;">
-  <h2>Réservations</h2>
-  <table id="resaTable" border="1"></table>
+<div id="admin-panel">
+  <h2>Panneau d'administration</h2>
+
+  <button onclick="chargerReservations()">Voir les réservations</button>
+  <div id="reservations"></div>
+
+  <h3>Bloquer une date</h3>
+  <label>Bungalow</label>
+  <select id="bungalow">
+    <option value="bungalow1">Bungalow 1</option>
+    <option value="bungalow2">Bungalow 2</option>
+  </select>
+
+  <label>Date à bloquer</label>
+  <input type="date" id="dateBlock">
+
+  <button onclick="bloquerDate()">Bloquer</button>
+
+  <div id="block-result"></div>
 </div>
 
 <script>
-async function login() {
-  const password = document.getElementById("password").value;
+const ADMIN_PASSWORD = "1234"; // change ici
 
-  const res = await fetch("https://h-e5oa.onrender.com/admin/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password })
-  });
-
-  const json = await res.json();
-
-  if (!json.success) {
-    alert("Mot de passe incorrect");
+function login() {
+  const pass = document.getElementById("password").value;
+  if (pass !== ADMIN_PASSWORD) {
+    document.getElementById("error").textContent = "Mot de passe incorrect";
+    document.getElementById("error").style.display = "block";
     return;
   }
 
-  document.getElementById("adminPanel").style.display = "block";
-  loadReservations();
+  document.getElementById("login-box").style.display = "none";
+  document.getElementById("admin-panel").style.display = "block";
 }
 
-async function loadReservations() {
-  const res = await fetch("https://h-e5oa.onrender.com/admin/reservations");
+// Charger les réservations
+async function chargerReservations() {
+  const res = await fetch("https://h-e5oa.onrender.com/api/reservations");
   const data = await res.json();
 
-  const table = document.getElementById("resaTable");
-  table.innerHTML = "<tr><th>ID</th><th>Date</th><th>Nom</th><th>Email</th><th>Nuits</th><th>Prix</th></tr>";
-
+  let html = "<ul>";
   data.forEach(r => {
-    table.innerHTML += `
-      <tr>
-        <td>${r.id}</td>
-        <td>${r.date}</td>
-        <td>${r.name}</td>
-        <td>${r.email}</td>
-        <td>${r.nights}</td>
-        <td>${r.price}</td>
-      </tr>
-    `;
+    html += `<li>${r.bungalow} — ${r.dateArrivee} → ${r.dateDepart} — ${r.name}</li>`;
   });
+  html += "</ul>";
+
+  document.getElementById("reservations").innerHTML = html;
+}
+
+// Bloquer une date
+async function bloquerDate() {
+  const bungalow = document.getElementById("bungalow").value;
+  const date = document.getElementById("dateBlock").value;
+
+  const res = await fetch("https://h-e5oa.onrender.com/api/block-date", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bungalow, date })
+  });
+
+  const json = await res.json();
+  document.getElementById("block-result").textContent = json.message;
 }
 </script>
 
