@@ -46,7 +46,7 @@ app.get("/api/reservations", (req, res) => {
 });
 
 // ------------------------------------------------------
-// BLOQUER UNE DATE (SANS Z, SANS DÉCALAGE)
+// BLOQUER UNE DATE
 // ------------------------------------------------------
 app.post("/api/block-date", (req, res) => {
   const { bungalow, date } = req.body;
@@ -57,13 +57,8 @@ app.post("/api/block-date", (req, res) => {
 
   const filePath = path.join(__dirname, "icals", `${bungalow}.ics`);
 
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ message: "ICS introuvable" });
-  }
-
   const d = date.replace(/-/g, "");
 
-  // 🔥 PAS DE Z → PAS DE DÉCALAGE
   const event = `
 BEGIN:VEVENT
 DTSTART:${d}T000000
@@ -78,29 +73,17 @@ END:VEVENT
 });
 
 // ------------------------------------------------------
-// DÉBLOQUER UNE DATE (SUPPRESSION DE TOUS FORMATS)
+// DÉBLOQUER UNE DATE
 // ------------------------------------------------------
 app.post("/api/unblock-date", (req, res) => {
   const { bungalow, date } = req.body;
 
-  if (!bungalow || !date) {
-    return res.status(400).json({ message: "Champs manquants" });
-  }
-
   const filePath = path.join(__dirname, "icals", `${bungalow}.ics`);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ message: "ICS introuvable" });
-  }
 
   let ics = fs.readFileSync(filePath, "utf8");
 
   const d = date.replace(/-/g, "");
 
-  // 🔥 SUPPRIME TOUS LES FORMATS POSSIBLES :
-  // - DTSTART:YYYYMMDDT000000
-  // - DTSTART:YYYYMMDDT120000Z
-  // - DTSTART:YYYYMMDDTxxxxxx
   const regex = new RegExp(
     `BEGIN:VEVENT[\\s\\S]*?DTSTART:${d}T[0-9]{6}Z?[\\s\\S]*?END:VEVENT`,
     "g"
@@ -114,15 +97,11 @@ app.post("/api/unblock-date", (req, res) => {
 });
 
 // ------------------------------------------------------
-// STRIPE CHECKOUT
+// STRIPE CHECKOUT + FACTURE
 // ------------------------------------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
     const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
-
-    if (!bungalow || !name || !email || !dateArrivee || !dateDepart || !price) {
-      return res.status(400).json({ error: "Champs manquants" });
-    }
 
     const filePath = path.join(__dirname, "data.json");
     let data = [];
@@ -147,6 +126,12 @@ app.post("/api/create-checkout-session", async (req, res) => {
       payment_method_types: ["card"],
       mode: "payment",
       customer_email: email,
+
+      // 🔥 Active la facture PDF
+      invoice_creation: {
+        enabled: true
+      },
+
       line_items: [
         {
           price_data: {
@@ -160,7 +145,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
           quantity: 1
         }
       ],
-      success_url: "https://h-1-y7xu.onrender.com/success.html",
+      success_url: "https://h-1-y7xu.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
       cancel_url: "https://h-1-y7xu.onrender.com/cancel.html"
     });
 
@@ -169,6 +154,27 @@ app.post("/api/create-checkout-session", async (req, res) => {
   } catch (err) {
     console.error("Erreur Stripe :", err);
     res.status(500).json({ error: "Erreur serveur Stripe" });
+  }
+});
+
+// ------------------------------------------------------
+// RÉCUPÉRER LA FACTURE PDF
+// ------------------------------------------------------
+app.get("/api/invoice/:sessionId", async (req, res) => {
+  try {
+    const session = await stripe.checkout.sessions.retrieve(req.params.sessionId);
+
+    if (!session.invoice) {
+      return res.json({ url: null });
+    }
+
+    const invoice = await stripe.invoices.retrieve(session.invoice);
+
+    res.json({ url: invoice.invoice_pdf });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur récupération facture" });
   }
 });
 
