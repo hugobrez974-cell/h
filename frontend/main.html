@@ -5,9 +5,6 @@
   <title>Les tonneaux des Ô – Séjour nature & détente</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- ❌ Mauvais : <link href="/IMG_7682.jpeg" rel="stylesheet"> -->
-  <!-- ✔ Supprimé car cassait ton CSS -->
-
   <style>
     :root {
       --bois: #5A4633;
@@ -38,7 +35,7 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid #e5d8c8;
-      z-index: 10000; /* 🔥 important */
+      z-index: 10000;
     }
 
     .logo {
@@ -69,7 +66,6 @@
       color: var(--bois);
     }
 
-    /* 🔥 NOUVEAU MENU MOBILE */
     #mobileMenu {
       position: fixed;
       top: 0;
@@ -178,6 +174,46 @@
       .grid-2 { grid-template-columns: 1fr; }
     }
 
+    /* --- SLIDER BUNGALOWS --- */
+    .slider {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 1rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .slides {
+      display: flex;
+      transition: transform 0.4s ease;
+    }
+
+    .slides img {
+      width: 100%;
+      flex-shrink: 0;
+      border-radius: 1rem;
+    }
+
+    .slider button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.4);
+      border: none;
+      color: white;
+      font-size: 2rem;
+      padding: 0.3rem 0.8rem;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+
+    .slider .prev { left: 10px; }
+    .slider .next { right: 10px; }
+
+    .slider button:hover {
+      background: rgba(0,0,0,0.6);
+    }
+
     footer {
       text-align: center;
       padding: 2rem;
@@ -203,7 +239,6 @@
   </nav>
 </header>
 
-<!-- 🔥 NOUVEAU VOLET MOBILE -->
 <div id="mobileMenu">
   <a href="#bungalows" onclick="toggleMenu()">Bungalows</a>
   <a href="/dispo.html" onclick="toggleMenu()">Disponibilités</a>
@@ -228,7 +263,29 @@
       <p>Chaque bungalow a été conçu pour offrir confort, intimité et immersion dans la nature.</p>
       <p>Idéal pour couples ou voyageurs en solo.</p>
     </div>
-    <img src="/IMG_7682.jpeg" style="width:100%; border-radius:1rem;">
+
+    <!-- 🔥 SLIDER COMPLET -->
+    <div class="slider">
+      <div class="slides">
+        <img src="/img1.jpeg" alt="">
+        <img src="/img2.jpeg" alt="">
+        <img src="/img3.jpeg" alt="">
+        <img src="/img4.jpeg" alt="">
+        <img src="/img5.jpeg" alt="">
+        <img src="/img6.jpeg" alt="">
+        <img src="/img7.jpeg" alt="">
+        <img src="/img8.jpeg" alt="">
+        <img src="/img9.jpeg" alt="">
+        <img src="/img10.jpeg" alt="">
+        <img src="/img11.jpeg" alt="">
+        <img src="/img12.jpeg" alt="">
+        <img src="/img13.jpeg" alt="">
+      </div>
+
+      <button class="prev">‹</button>
+      <button class="next">›</button>
+    </div>
+
   </div>
 </section>
 
@@ -248,6 +305,27 @@ function toggleMenu() {
 }
 
 document.getElementById('year').textContent = new Date().getFullYear();
+
+/* --- SLIDER JS --- */
+let index = 0;
+
+function showSlide() {
+  const slides = document.querySelector(".slides");
+  const total = slides.children.length;
+  slides.style.transform = `translateX(-${index * 100}%)`;
+}
+
+document.querySelector(".next").onclick = () => {
+  const total = document.querySelector(".slides").children.length;
+  index = (index + 1) % total;
+  showSlide();
+};
+
+document.querySelector(".prev").onclick = () => {
+  const total = document.querySelector(".slides").children.length;
+  index = (index - 1 + total) % total;
+  showSlide();
+};
 </script>
 
 </body>
