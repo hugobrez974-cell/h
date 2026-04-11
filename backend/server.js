@@ -11,7 +11,6 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// CORS
 app.use(cors({
   origin: "https://h-1-y7xu.onrender.com",
   methods: ["GET", "POST"],
@@ -20,7 +19,9 @@ app.use(cors({
 
 app.use(express.json());
 
-// 🔥 ICS : /icals/bungalow1.ics, /icals/bungalow2.ics
+// ------------------------------------------------------
+// 🔥 SERVIR LES ICS
+// ------------------------------------------------------
 app.get("/icals/:bungalow.ics", (req, res) => {
   const filePath = path.join(__dirname, "icals", `${req.params.bungalow}.ics`);
 
@@ -32,19 +33,21 @@ app.get("/icals/:bungalow.ics", (req, res) => {
   res.send(fs.readFileSync(filePath, "utf8"));
 });
 
-// Voir les réservations (admin)
+// ------------------------------------------------------
+// 🔥 VOIR LES RÉSERVATIONS
+// ------------------------------------------------------
 app.get("/api/reservations", (req, res) => {
   const filePath = path.join(__dirname, "data.json");
 
-  if (!fs.existsSync(filePath)) {
-    return res.json([]);
-  }
+  if (!fs.existsSync(filePath)) return res.json([]);
 
   const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
   res.json(data);
 });
 
-// Bloquer une date (admin)
+// ------------------------------------------------------
+// 🔥 BLOQUER UNE DATE (AJOUT ICS)
+// ------------------------------------------------------
 app.post("/api/block-date", (req, res) => {
   const { bungalow, date } = req.body;
 
@@ -58,10 +61,12 @@ app.post("/api/block-date", (req, res) => {
     return res.status(404).json({ message: "ICS introuvable" });
   }
 
+  const d = date.replace(/-/g, "");
+
   const event = `
 BEGIN:VEVENT
-DTSTART:${date.replace(/-/g,"")}T120000Z
-DTEND:${date.replace(/-/g,"")}T130000Z
+DTSTART:${d}T120000Z
+DTEND:${d}T130000Z
 SUMMARY:Bloqué
 END:VEVENT
 `;
@@ -71,7 +76,42 @@ END:VEVENT
   res.json({ message: "Date bloquée !" });
 });
 
-// Stripe checkout
+// ------------------------------------------------------
+// 🔥 DÉBLOQUER UNE DATE (SUPPRESSION ICS)
+// ------------------------------------------------------
+app.post("/api/unblock-date", (req, res) => {
+  const { bungalow, date } = req.body;
+
+  if (!bungalow || !date) {
+    return res.status(400).json({ message: "Champs manquants" });
+  }
+
+  const filePath = path.join(__dirname, "icals", `${bungalow}.ics`);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ message: "ICS introuvable" });
+  }
+
+  let ics = fs.readFileSync(filePath, "utf8");
+
+  const d = date.replace(/-/g, "");
+
+  // 🔥 REGEX ULTRA ROBUSTE
+  const regex = new RegExp(
+    `BEGIN:VEVENT[\\s\\S]*?DTSTART:${d}T[0-9]+Z[\\s\\S]*?END:VEVENT`,
+    "g"
+  );
+
+  const newIcs = ics.replace(regex, "").trim();
+
+  fs.writeFileSync(filePath, newIcs);
+
+  res.json({ message: "Date débloquée !" });
+});
+
+// ------------------------------------------------------
+// 🔥 STRIPE CHECKOUT
+// ------------------------------------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
     const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
@@ -118,8 +158,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
         }
       ],
       success_url: "https://h-1-y7xu.onrender.com/success.html",
-      cancel_url: "https://h-1-y7xu.onrender.com/cancel.html",
-      metadata: { bungalow, name, email, dateArrivee, dateDepart }
+      cancel_url: "https://h-1-y7xu.onrender.com/cancel.html"
     });
 
     res.json({ url: session.url });
@@ -130,6 +169,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
   }
 });
 
+// ------------------------------------------------------
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log("Backend en ligne sur le port", PORT);
