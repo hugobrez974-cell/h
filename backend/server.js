@@ -11,6 +11,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// ------------------------------------------------------
+// CORS
+// ------------------------------------------------------
 app.use(cors({
   origin: "https://h-1-y7xu.onrender.com",
   methods: ["GET", "POST"],
@@ -63,10 +66,11 @@ app.post("/api/block-date", (req, res) => {
 
   const d = date.replace(/-/g, "");
 
+  // 🔥 IMPORTANT : PAS DE "Z" → PAS DE DÉCALAGE
   const event = `
 BEGIN:VEVENT
-DTSTART:${d}T120000Z
-DTEND:${d}T130000Z
+DTSTART:${d}T000000
+DTEND:${d}T000100
 SUMMARY:Bloqué
 END:VEVENT
 `;
@@ -96,9 +100,9 @@ app.post("/api/unblock-date", (req, res) => {
 
   const d = date.replace(/-/g, "");
 
-  // 🔥 REGEX ULTRA ROBUSTE
+  // 🔥 REGEX ROBUSTE (sans Z)
   const regex = new RegExp(
-    `BEGIN:VEVENT[\\s\\S]*?DTSTART:${d}T[0-9]+Z[\\s\\S]*?END:VEVENT`,
+    `BEGIN:VEVENT[\\s\\S]*?DTSTART:${d}T[0-9]{6}[\\s\\S]*?END:VEVENT`,
     "g"
   );
 
