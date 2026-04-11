@@ -12,42 +12,64 @@
       color: #3A2F25;
       padding: 2rem;
     }
+
+    h1, h2, h3 {
+      color: #5A4633;
+    }
+
     .box {
-      max-width: 400px;
+      max-width: 450px;
       margin: auto;
       background: #fff;
       padding: 2rem;
       border-radius: 1rem;
       border: 2px solid #5A4633;
     }
-    input, button {
+
+    input, select, button {
       width: 100%;
       padding: 0.8rem;
       margin-top: 1rem;
       border-radius: 0.6rem;
       border: 2px solid #5A4633;
+      font-size: 1rem;
     }
+
     button {
       background: #A7C4A0;
       font-weight: 700;
       cursor: pointer;
     }
+
+    button:hover {
+      filter: brightness(1.05);
+    }
+
     #admin-panel {
       display: none;
       margin-top: 2rem;
     }
+
     .error {
       color: red;
       margin-top: 1rem;
       display: none;
+    }
+
+    ul {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 0.6rem;
+      border: 2px solid #5A4633;
     }
   </style>
 </head>
 
 <body>
 
-<h1>Admin</h1>
+<h1>Administration</h1>
 
+<!-- LOGIN -->
 <div class="box" id="login-box">
   <label>Mot de passe admin</label>
   <input type="password" id="password">
@@ -55,15 +77,22 @@
   <div id="error" class="error"></div>
 </div>
 
+<!-- PANEL ADMIN -->
 <div id="admin-panel">
+
   <h2>Panneau d'administration</h2>
 
+  <!-- Voir les réservations -->
   <button onclick="chargerReservations()">Voir les réservations</button>
   <div id="reservations"></div>
 
+  <hr><br>
+
+  <!-- Bloquer une date -->
   <h3>Bloquer une date</h3>
+
   <label>Bungalow</label>
-  <select id="bungalow">
+  <select id="bungalowBlock">
     <option value="bungalow1">Bungalow 1</option>
     <option value="bungalow2">Bungalow 2</option>
   </select>
@@ -72,15 +101,36 @@
   <input type="date" id="dateBlock">
 
   <button onclick="bloquerDate()">Bloquer</button>
-
   <div id="block-result"></div>
+
+  <hr><br>
+
+  <!-- Débloquer une date -->
+  <h3>Débloquer une date</h3>
+
+  <label>Bungalow</label>
+  <select id="bungalowUnblock">
+    <option value="bungalow1">Bungalow 1</option>
+    <option value="bungalow2">Bungalow 2</option>
+  </select>
+
+  <label>Date à débloquer</label>
+  <input type="date" id="dateUnblock">
+
+  <button onclick="debloquerDate()">Débloquer</button>
+  <div id="unblock-result"></div>
+
 </div>
 
 <script>
-const ADMIN_PASSWORD = "31072011202731153129Hugo@"; // change ici
+const ADMIN_PASSWORD = "Ev017846@"; // change ici
 
+// ----------------------
+// LOGIN
+// ----------------------
 function login() {
   const pass = document.getElementById("password").value;
+
   if (pass !== ADMIN_PASSWORD) {
     document.getElementById("error").textContent = "Mot de passe incorrect";
     document.getElementById("error").style.display = "block";
@@ -91,23 +141,32 @@ function login() {
   document.getElementById("admin-panel").style.display = "block";
 }
 
-// Charger les réservations
+// ----------------------
+// VOIR LES RÉSERVATIONS
+// ----------------------
 async function chargerReservations() {
   const res = await fetch("https://h-e5oa.onrender.com/api/reservations");
   const data = await res.json();
 
+  if (data.length === 0) {
+    document.getElementById("reservations").innerHTML = "<p>Aucune réservation.</p>";
+    return;
+  }
+
   let html = "<ul>";
   data.forEach(r => {
-    html += `<li>${r.bungalow} — ${r.dateArrivee} → ${r.dateDepart} — ${r.name}</li>`;
+    html += `<li><b>${r.bungalow}</b> — ${r.dateArrivee} → ${r.dateDepart} — ${r.name}</li>`;
   });
   html += "</ul>";
 
   document.getElementById("reservations").innerHTML = html;
 }
 
-// Bloquer une date
+// ----------------------
+// BLOQUER UNE DATE
+// ----------------------
 async function bloquerDate() {
-  const bungalow = document.getElementById("bungalow").value;
+  const bungalow = document.getElementById("bungalowBlock").value;
   const date = document.getElementById("dateBlock").value;
 
   const res = await fetch("https://h-e5oa.onrender.com/api/block-date", {
@@ -118,6 +177,23 @@ async function bloquerDate() {
 
   const json = await res.json();
   document.getElementById("block-result").textContent = json.message;
+}
+
+// ----------------------
+// DÉBLOQUER UNE DATE
+// ----------------------
+async function debloquerDate() {
+  const bungalow = document.getElementById("bungalowUnblock").value;
+  const date = document.getElementById("dateUnblock").value;
+
+  const res = await fetch("https://h-e5oa.onrender.com/api/unblock-date", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bungalow, date })
+  });
+
+  const json = await res.json();
+  document.getElementById("unblock-result").textContent = json.message;
 }
 </script>
 
