@@ -5,7 +5,8 @@
   <title>Les tonneaux des Ô – Séjour nature & détente</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link href="/IMG_7682.jpeg" rel="stylesheet">
+  <!-- ❌ Mauvais : <link href="/IMG_7682.jpeg" rel="stylesheet"> -->
+  <!-- ✔ Supprimé car cassait ton CSS -->
 
   <style>
     :root {
@@ -15,9 +16,6 @@
       --blanc: #d6c7a0;
       --or: #D9B77A;
       --texte: #3A2F25;
-
-      --white: #ffffff;
-      --panel: #5a4633;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,7 +38,7 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid #e5d8c8;
-      z-index: 10;
+      z-index: 10000; /* 🔥 important */
     }
 
     .logo {
@@ -71,20 +69,36 @@
       color: var(--bois);
     }
 
-    .mobile-menu {
-      display: none;
+    /* 🔥 NOUVEAU MENU MOBILE */
+    #mobileMenu {
+      position: fixed;
+      top: 0;
+      right: -260px;
+      width: 260px;
+      height: 100%;
+      background: var(--bois);
+      color: var(--sable);
+      padding: 2rem;
+      display: flex;
       flex-direction: column;
-      background: rgba(255,255,255,0.95);
-      padding: 1rem 2rem;
-      border-bottom: 1px solid #e5d8c8;
+      gap: 1.5rem;
+      transition: right 0.35s ease;
+      z-index: 99999;
     }
 
-    .mobile-menu a {
-      padding: 0.8rem 0;
+    #mobileMenu.open {
+      right: 0;
+    }
+
+    #mobileMenu a {
+      color: var(--sable);
       text-decoration: none;
-      color: var(--bois);
+      font-size: 1.2rem;
       font-weight: 600;
-      border-bottom: 1px solid #e5d8c8;
+    }
+
+    #mobileMenu a:hover {
+      color: var(--vert);
     }
 
     @media (max-width: 800px) {
@@ -101,6 +115,7 @@
       padding: 3rem;
       color: white;
       position: relative;
+      z-index: 1;
     }
 
     .hero::after {
@@ -112,6 +127,7 @@
 
     .hero-content {
       position: relative;
+      z-index: 2;
       max-width: 600px;
     }
 
@@ -125,19 +141,6 @@
       font-size: 1.2rem;
       margin-bottom: 1.5rem;
     }
-    .hero {
-  position: relative;
-  z-index: 1;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 2;
-}
-
-.hero * {
-  pointer-events: auto;
-}
 
     .btn {
       display: inline-block;
@@ -175,13 +178,6 @@
       .grid-2 { grid-template-columns: 1fr; }
     }
 
-    .card {
-      background: var(--blanc);
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
     footer {
       text-align: center;
       padding: 2rem;
@@ -207,11 +203,13 @@
   </nav>
 </header>
 
-<div class="mobile-menu" id="mobileMenu">
+<!-- 🔥 NOUVEAU VOLET MOBILE -->
+<div id="mobileMenu">
   <a href="#bungalows" onclick="toggleMenu()">Bungalows</a>
   <a href="/dispo.html" onclick="toggleMenu()">Disponibilités</a>
   <a href="/reservation.html" onclick="toggleMenu()">Réserver</a>
   <a href="#contact" onclick="toggleMenu()">Contact</a>
+  <a href="#" onclick="toggleMenu()">Fermer</a>
 </div>
 
 <section class="hero">
@@ -227,7 +225,7 @@
   <h2>Nos Bungalows</h2>
   <div class="grid-2">
     <div>
-      <p>Chaque bungalow a été conçu pour offrir confort, intimité et immersion dans la nature. Bois, matières naturelles, lumière douce… tout est pensé pour un séjour chaleureux.</p>
+      <p>Chaque bungalow a été conçu pour offrir confort, intimité et immersion dans la nature.</p>
       <p>Idéal pour couples ou voyageurs en solo.</p>
     </div>
     <img src="/IMG_7682.jpeg" style="width:100%; border-radius:1rem;">
@@ -235,38 +233,8 @@
 </section>
 
 <section class="section" id="contact">
-  <div class="contact-form">
-    <h3>CONTACT</h3>
-
-    <div class="cf-grid">
-      <div>
-        <label class="cf-label">Nom</label>
-        <input id="cf-nom" class="cf-input" placeholder="Votre nom">
-      </div>
-
-      <div>
-        <label class="cf-label">Email</label>
-        <input id="cf-email" class="cf-input" placeholder="Votre email">
-      </div>
-
-      <div class="cf-full">
-        <label class="cf-label">Sujet</label>
-        <select id="cf-sujet" class="cf-select">
-          <option value="">Choisir…</option>
-          <option>Réservation</option>
-          <option>Disponibilités</option>
-          <option>Autre</option>
-        </select>
-      </div>
-
-      <div class="cf-full">
-        <label class="cf-label">Message</label>
-        <textarea id="cf-message" class="cf-textarea" placeholder="Votre message"></textarea>
-      </div>
-    </div>
-
-    <button onclick="sendContact()" class="btn btn-primary" style="margin-top:20px;">Envoyer</button>
-  </div>
+  <h3>CONTACT</h3>
+  <p>Pour toute question, contactez-nous au <b>+262 693 63 66 81</b>.</p>
 </section>
 
 <footer>
@@ -276,27 +244,7 @@
 <script>
 function toggleMenu() {
   const menu = document.getElementById("mobileMenu");
-  menu.style.display = menu.style.display === "flex" ? "none" : "flex";
-}
-
-function sendContact(){
-  const nom=document.getElementById('cf-nom')?.value.trim();
-  const email=document.getElementById('cf-email')?.value.trim();
-  const sujet=document.getElementById('cf-sujet')?.value;
-  const msg=document.getElementById('cf-message')?.value.trim();
-
-  if(!nom){ alert('Entrez votre nom'); return; }
-  if(!email?.includes('@')){ alert('Email invalide'); return; }
-  if(!sujet){ alert('Choisissez un sujet'); return; }
-  if(!msg){ alert('Écrivez votre message'); return; }
-
-  ['cf-nom','cf-email','cf-sujet','cf-message'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.value='';
-  });
-
-  alert('Message non envoyé. En raison de probleme du site web l'acces au mode contact est desactivée. Vous pouvez envoyé un message au numero suivant +262 693 63 66 81 ( numero de la Réunion )
-  . Merci de votre compréhension');
+  menu.classList.toggle("open");
 }
 
 document.getElementById('year').textContent = new Date().getFullYear();
