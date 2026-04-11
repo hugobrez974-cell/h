@@ -29,11 +29,6 @@
       margin-bottom: 1rem;
     }
 
-    p {
-      font-size: 1.1rem;
-      margin-bottom: 1.5rem;
-    }
-
     .btn {
       display: inline-block;
       padding: 1rem 1.5rem;
@@ -52,10 +47,10 @@
       background: #8fb48a;
     }
 
-    .small {
-      margin-top: 2rem;
-      font-size: 0.9rem;
-      opacity: 0.7;
+    .info {
+      margin-top: 1rem;
+      font-size: 1.1rem;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -65,43 +60,53 @@
 <div class="box">
   <h1>🎉 Paiement réussi !</h1>
 
-  <p>Merci pour votre réservation aux <b>Tonneaux des Ô</b>.<br>
-  Votre séjour est maintenant confirmé.</p>
+  <div id="details" class="info"></div>
 
-  <p>Vous pouvez télécharger votre facture ci‑dessous :</p>
-
-  <!-- 🔥 Bouton pour télécharger la facture -->
   <button id="facture-btn" class="btn">Télécharger la facture</button>
 
   <br><br>
 
   <a href="main.html" class="btn">Retour à l'accueil</a>
-
-  <p class="small"> Veullier télécharger la facture.Cela permettra de confirmer votre identité .</p>
 </div>
 
 <script>
-async function getInvoice() {
+async function loadInvoice() {
   const sessionId = new URLSearchParams(window.location.search).get("session_id");
+  if (!sessionId) return;
 
-  if (!sessionId) {
-    alert("Impossible de récupérer la facture (session manquante).");
-    return;
-  }
-
+  // Récupération de la facture Stripe
   const res = await fetch(`https://h-e5oa.onrender.com/api/invoice/${sessionId}`);
   const json = await res.json();
 
-  if (!json.url) {
-    alert("La facture n'est pas encore disponible. Réessayez dans quelques secondes.");
-    return;
-  }
+  // Stockage du lien PDF
+  window.invoiceUrl = json.url;
 
-  // 🔥 Ouvre directement le PDF
-  window.location.href = json.url;
+  // Récupération des infos de réservation
+  const res2 = await fetch("https://h-e5oa.onrender.com/api/reservations");
+  const all = await res2.json();
+
+  const reservation = all.find(r => r.sessionId === sessionId) || all[all.length - 1];
+
+  document.getElementById("details").innerHTML = `
+    <b>Bungalow :</b> ${reservation.bungalow}<br>
+    <b>Arrivée :</b> ${reservation.dateArrivee}<br>
+    <b>Départ :</b> ${reservation.dateDepart}<br>
+    <b>Montant :</b> ${reservation.price} €
+  `;
+
+  // Téléchargement automatique de la facture
+  if (window.invoiceUrl) {
+    setTimeout(() => {
+      window.location.href = window.invoiceUrl;
+    }, 1500);
+  }
 }
 
-document.getElementById("facture-btn").onclick = getInvoice;
+document.getElementById("facture-btn").onclick = () => {
+  if (window.invoiceUrl) window.location.href = window.invoiceUrl;
+};
+
+loadInvoice();
 </script>
 
 </body>
