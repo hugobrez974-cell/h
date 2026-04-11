@@ -2,68 +2,60 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Paiement réussi</title>
+  <title>Paiement réussi – Les Tonneaux des Ô</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    :root {
-      --bois: #5A4633;
-      --sable: #F4E9D8;
-      --vert: #A7C4A0;
-      --blanc: #d6c7a0;
-      --texte: #3A2F25;
-    }
-
     body {
-      margin: 0;
       font-family: 'Nunito', sans-serif;
-      background: var(--sable);
-      color: var(--texte);
-      padding: 2rem;
+      background: #F4E9D8;
+      color: #3A2F25;
       text-align: center;
+      padding: 3rem 1rem;
     }
 
     .box {
-      max-width: 450px;
+      max-width: 500px;
       margin: auto;
-      background: var(--blanc);
+      background: white;
       padding: 2rem;
       border-radius: 1rem;
-      border: 2px solid var(--bois);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      border: 2px solid #5A4633;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
 
     h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 2rem;
-      color: var(--bois);
+      color: #5A4633;
+      margin-bottom: 1rem;
     }
 
     p {
-      margin-top: 1rem;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
     }
 
     .btn {
-      display: block;
-      margin: 2rem auto 0;
-      padding: 0.9rem 1.6rem;
-      background: var(--vert);
-      color: var(--bois);
-      border-radius: 999px;
-      font-weight: 700;
+      display: inline-block;
+      padding: 1rem 1.5rem;
+      background: #A7C4A0;
+      border: none;
+      border-radius: 10px;
       font-size: 1.1rem;
-      border: 2px solid var(--bois);
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 20px;
+      color: #3A2F25;
       text-decoration: none;
-      width: fit-content;
     }
 
-    .btn:hover { filter: brightness(1.05); }
+    .btn:hover {
+      background: #8fb48a;
+    }
 
-    .phone {
-      margin-top: 1.5rem;
-      font-weight: 600;
-      color: var(--bois);
+    .small {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      opacity: 0.7;
     }
   </style>
 </head>
@@ -71,13 +63,46 @@
 <body>
 
 <div class="box">
-  <h1>Paiement confirmé ✔</h1>
-  <p>Votre réservation a bien été enregistrée.</p>
+  <h1>🎉 Paiement réussi !</h1>
 
-  <a href="main.html" class="btn">Retour à l’accueil</a>
+  <p>Merci pour votre réservation aux <b>Tonneaux des Ô</b>.<br>
+  Votre séjour est maintenant confirmé.</p>
 
-  <div class="phone">📞 +262 693 63 66 81</div>
+  <p>Vous pouvez télécharger votre facture ci‑dessous :</p>
+
+  <!-- 🔥 Bouton pour télécharger la facture -->
+  <button id="facture-btn" class="btn">Télécharger la facture</button>
+
+  <br><br>
+
+  <a href="main.html" class="btn">Retour à l'accueil</a>
+
+  <p class="small">Un email de confirmation vous a également été envoyé.</p>
 </div>
+
+<script>
+async function getInvoice() {
+  const sessionId = new URLSearchParams(window.location.search).get("session_id");
+
+  if (!sessionId) {
+    alert("Impossible de récupérer la facture (session manquante).");
+    return;
+  }
+
+  const res = await fetch(`https://h-e5oa.onrender.com/api/invoice/${sessionId}`);
+  const json = await res.json();
+
+  if (!json.url) {
+    alert("La facture n'est pas encore disponible. Réessayez dans quelques secondes.");
+    return;
+  }
+
+  // 🔥 Ouvre directement le PDF
+  window.location.href = json.url;
+}
+
+document.getElementById("facture-btn").onclick = getInvoice;
+</script>
 
 </body>
 </html>
