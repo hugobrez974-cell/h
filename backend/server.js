@@ -11,9 +11,6 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// ------------------------------------------------------
-// CORS
-// ------------------------------------------------------
 app.use(cors({
   origin: "https://h-1-y7xu.onrender.com",
   methods: ["GET", "POST"],
@@ -23,7 +20,7 @@ app.use(cors({
 app.use(express.json());
 
 // ------------------------------------------------------
-// 🔥 SERVIR LES ICS
+// SERVIR LES ICS
 // ------------------------------------------------------
 app.get("/icals/:bungalow.ics", (req, res) => {
   const filePath = path.join(__dirname, "icals", `${req.params.bungalow}.ics`);
@@ -37,7 +34,7 @@ app.get("/icals/:bungalow.ics", (req, res) => {
 });
 
 // ------------------------------------------------------
-// 🔥 VOIR LES RÉSERVATIONS
+// VOIR LES RÉSERVATIONS
 // ------------------------------------------------------
 app.get("/api/reservations", (req, res) => {
   const filePath = path.join(__dirname, "data.json");
@@ -49,7 +46,7 @@ app.get("/api/reservations", (req, res) => {
 });
 
 // ------------------------------------------------------
-// 🔥 BLOQUER UNE DATE (AJOUT ICS)
+// BLOQUER UNE DATE (SANS Z, SANS DÉCALAGE)
 // ------------------------------------------------------
 app.post("/api/block-date", (req, res) => {
   const { bungalow, date } = req.body;
@@ -66,7 +63,7 @@ app.post("/api/block-date", (req, res) => {
 
   const d = date.replace(/-/g, "");
 
-  // 🔥 IMPORTANT : PAS DE "Z" → PAS DE DÉCALAGE
+  // 🔥 PAS DE Z → PAS DE DÉCALAGE
   const event = `
 BEGIN:VEVENT
 DTSTART:${d}T000000
@@ -81,7 +78,7 @@ END:VEVENT
 });
 
 // ------------------------------------------------------
-// 🔥 DÉBLOQUER UNE DATE (SUPPRESSION ICS)
+// DÉBLOQUER UNE DATE (SUPPRESSION DE TOUS FORMATS)
 // ------------------------------------------------------
 app.post("/api/unblock-date", (req, res) => {
   const { bungalow, date } = req.body;
@@ -100,9 +97,12 @@ app.post("/api/unblock-date", (req, res) => {
 
   const d = date.replace(/-/g, "");
 
-  // 🔥 REGEX ROBUSTE (sans Z)
+  // 🔥 SUPPRIME TOUS LES FORMATS POSSIBLES :
+  // - DTSTART:YYYYMMDDT000000
+  // - DTSTART:YYYYMMDDT120000Z
+  // - DTSTART:YYYYMMDDTxxxxxx
   const regex = new RegExp(
-    `BEGIN:VEVENT[\\s\\S]*?DTSTART:${d}T[0-9]{6}[\\s\\S]*?END:VEVENT`,
+    `BEGIN:VEVENT[\\s\\S]*?DTSTART:${d}T[0-9]{6}Z?[\\s\\S]*?END:VEVENT`,
     "g"
   );
 
@@ -114,7 +114,7 @@ app.post("/api/unblock-date", (req, res) => {
 });
 
 // ------------------------------------------------------
-// 🔥 STRIPE CHECKOUT
+// STRIPE CHECKOUT
 // ------------------------------------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
@@ -124,7 +124,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
       return res.status(400).json({ error: "Champs manquants" });
     }
 
-    // Sauvegarde dans data.json
     const filePath = path.join(__dirname, "data.json");
     let data = [];
 
