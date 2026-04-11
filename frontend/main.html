@@ -104,7 +104,7 @@
 
     /* HERO */
     .hero {
-      background: url('/IMG_7745.jpeg') center/cover no-repeat;
+      background: url('/img1.jpeg') center/cover no-repeat;
       height: 75vh;
       display: flex;
       align-items: center;
@@ -161,26 +161,23 @@
       font-size: 2.2rem;
       color: var(--bois);
       margin-bottom: 1rem;
+      text-align: center;
     }
 
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      align-items: center;
+    .bungalow-text {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
     }
 
-    @media (max-width: 800px) {
-      .grid-2 { grid-template-columns: 1fr; }
-    }
-
-    /* --- SLIDER BUNGALOWS --- */
+    /* SLIDER */
     .slider {
       position: relative;
       width: 100%;
       overflow: hidden;
       border-radius: 1rem;
       box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      margin-top: 1rem;
     }
 
     .slides {
@@ -190,6 +187,8 @@
 
     .slides img {
       width: 100%;
+      height: auto;
+      object-fit: cover;
       flex-shrink: 0;
       border-radius: 1rem;
     }
@@ -258,34 +257,31 @@
 
 <section class="section" id="bungalows">
   <h2>Nos Bungalows</h2>
-  <div class="grid-2">
-    <div>
-      <p>Chaque bungalow a été conçu pour offrir confort, intimité et immersion dans la nature.</p>
-      <p>Idéal pour couples ou voyageurs en solo.</p>
+
+  <div class="bungalow-text">
+    <p>Chaque bungalow a été conçu pour offrir confort, intimité et immersion dans la nature.</p>
+    <p>Idéal pour couples ou voyageurs en solo.</p>
+  </div>
+
+  <div class="slider">
+    <div class="slides">
+      <img src="/img1.jpeg">
+      <img src="/img2.jpeg">
+      <img src="/img3.jpeg">
+      <img src="/img4.jpeg">
+      <img src="/img5.jpeg">
+      <img src="/img6.jpeg">
+      <img src="/img7.jpeg">
+      <img src="/img8.jpeg">
+      <img src="/img9.jpeg">
+      <img src="/img10.jpeg">
+      <img src="/img11.jpeg">
+      <img src="/img12.jpeg">
+      <img src="/img13.jpeg">
     </div>
 
-    <!-- 🔥 SLIDER COMPLET -->
-    <div class="slider">
-      <div class="slides">
-        <img src="/img1.jpeg" alt="">
-        <img src="/img2.jpeg" alt="">
-        <img src="/img3.jpeg" alt="">
-        <img src="/img4.jpeg" alt="">
-        <img src="/img5.jpeg" alt="">
-        <img src="/img6.jpeg" alt="">
-        <img src="/img7.jpeg" alt="">
-        <img src="/img8.jpeg" alt="">
-        <img src="/img9.jpeg" alt="">
-        <img src="/img10.jpeg" alt="">
-        <img src="/img11.jpeg" alt="">
-        <img src="/img12.jpeg" alt="">
-        <img src="/img13.jpeg" alt="">
-      </div>
-
-      <button class="prev">‹</button>
-      <button class="next">›</button>
-    </div>
-
+    <button class="prev">‹</button>
+    <button class="next">›</button>
   </div>
 </section>
 
@@ -306,7 +302,7 @@ function toggleMenu() {
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
-/* --- SLIDER JS --- */
+/* SLIDER */
 let index = 0;
 
 function showSlide() {
