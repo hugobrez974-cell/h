@@ -12,7 +12,7 @@ app.use(express.static("public"));
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// 📌 Chemin vers data.json
+// 📌 Chemin vers data.json (à la racine de backend)
 const dataPath = path.join(process.cwd(), "data.json");
 
 // 📌 Charger les réservations
@@ -27,7 +27,7 @@ function saveReservations(data) {
 }
 
 // ---------------------------------------------------------
-// 🔥 ROUTE : CRÉATION SESSION STRIPE
+// 🔥 CRÉATION SESSION STRIPE
 // ---------------------------------------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
   const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
@@ -76,14 +76,26 @@ app.post("/api/create-checkout-session", async (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 ROUTE : LISTE DES RÉSERVATIONS
+// 🔥 LISTE DES RÉSERVATIONS
 // ---------------------------------------------------------
 app.get("/api/reservations", (req, res) => {
   res.json(loadReservations());
 });
 
 // ---------------------------------------------------------
-// 🔥 ROUTE : FACTURE STRIPE (PDF OFFICIEL STRIPE)
+// 🔥 SAUVEGARDE DES RÉSERVATIONS (ADMIN SUPPRESSION)
+// ---------------------------------------------------------
+app.post("/api/reservations", (req, res) => {
+  const data = req.body;
+  if (!Array.isArray(data)) {
+    return res.status(400).json({ error: "Format invalide" });
+  }
+  saveReservations(data);
+  res.json({ success: true });
+});
+
+// ---------------------------------------------------------
+// 🔥 FACTURE STRIPE (PDF OFFICIEL STRIPE)
 // ---------------------------------------------------------
 app.get("/api/invoice/:sessionId", async (req, res) => {
   try {
@@ -109,28 +121,56 @@ app.get("/api/invoice/:sessionId", async (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 ROUTE : FACTURE PDF PERSONNALISÉE (CLIENT)
+// 🔥 FACTURE PDF PERSONNALISÉE (CLIENT, via sessionId Stripe)
 // ---------------------------------------------------------
 app.get("/api/custom-invoice/:sessionId", (req, res) => {
-  generateInvoice(res, loadReservations().find(r => r.sessionId === req.params.sessionId), req.params.sessionId);
+  const reservations = loadReservations();
+  const reservation = reservations.find(
+    r => r.sessionId === req.params.sessionId
+  );
+  generateInvoice(res, reservation, req.params.sessionId);
 });
 
 // ---------------------------------------------------------
-// 🔥 ROUTE ADMIN : FACTURE PAR ID (SANS STRIPE)
+// 🔥 ADMIN : FACTURE PAR INDEX (SANS STRIPE)
 // ---------------------------------------------------------
 app.get("/api/admin/invoice/:id", (req, res) => {
   const reservations = loadReservations();
   const reservation = reservations[req.params.id];
-
-  if (!reservation) {
-    return res.status(404).send("Réservation introuvable");
-  }
-
   generateInvoice(res, reservation, req.params.id);
 });
 
 // ---------------------------------------------------------
-// 🔥 FONCTION GÉNÉRATION PDF (UTILISÉE PAR LES 2 ROUTES)
+// 🔥 ADMIN : CRÉER UNE RÉSERVATION
+// ---------------------------------------------------------
+app.post("/api/admin/create", (req, res) => {
+  const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
+
+  if (!bungalow || !name || !email || !dateArrivee || !dateDepart || !price) {
+    return res.status(400).json({ error: "Champs manquants" });
+  }
+
+  const reservations = loadReservations();
+
+  const newReservation = {
+    bungalow,
+    name,
+    email,
+    dateArrivee,
+    dateDepart,
+    price,
+    sessionId: "admin-" + Date.now(),
+    createdAt: new Date().toISOString(),
+  };
+
+  reservations.push(newReservation);
+  saveReservations(reservations);
+
+  res.json({ success: true, reservation: newReservation });
+});
+
+// ---------------------------------------------------------
+// 🔥 FONCTION GÉNÉRATION PDF
 // ---------------------------------------------------------
 function generateInvoice(res, reservation, invoiceId) {
   if (!reservation) {
@@ -147,19 +187,16 @@ function generateInvoice(res, reservation, invoiceId) {
 
   doc.pipe(res);
 
-  // LOGO (à la racine du backend)
   const logoPath = path.join(process.cwd(), "logo_official.png");
   if (fs.existsSync(logoPath)) {
     doc.image(logoPath, 40, 40, { width: 140 });
   }
 
-  // TITRE
   doc.fontSize(22).text("Les Tonneaux des Ô", 200, 50);
   doc.fontSize(12).text("Séjour nature et détente à Bois Court", 200, 75);
 
   doc.moveDown(2);
 
-  // FACTURE
   doc.fontSize(16).text("Facture", { underline: true });
   doc.moveDown();
 
@@ -167,7 +204,6 @@ function generateInvoice(res, reservation, invoiceId) {
   doc.text(`Date : ${new Date().toLocaleDateString("fr-FR")}`);
   doc.moveDown();
 
-  // CLIENT
   doc.fontSize(14).text("Informations client", { underline: true });
   doc.moveDown(0.5);
 
@@ -175,7 +211,6 @@ function generateInvoice(res, reservation, invoiceId) {
   doc.text(`Email : ${reservation.email}`);
   doc.moveDown();
 
-  // RÉSERVATION
   doc.fontSize(14).text("Détails de la réservation", { underline: true });
   doc.moveDown(0.5);
 
