@@ -2,199 +2,216 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Admin – Les tonneaux des Ô</title>
+  <title>Admin – Les Tonneaux des Ô</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
     body {
-      font-family: sans-serif;
-      background: #f4e9d8;
+      font-family: 'Nunito', sans-serif;
+      background: #F4E9D8;
       color: #3A2F25;
       padding: 2rem;
     }
 
-    h1, h2, h3 {
+    h1, h2 {
       color: #5A4633;
     }
 
-    .box {
-      max-width: 450px;
-      margin: auto;
-      background: #fff;
-      padding: 2rem;
-      border-radius: 1rem;
-      border: 2px solid #5A4633;
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
     }
 
-    input, select, button {
+    table {
       width: 100%;
-      padding: 0.8rem;
-      margin-top: 1rem;
-      border-radius: 0.6rem;
-      border: 2px solid #5A4633;
-      font-size: 1rem;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background: #5A4633;
+      color: white;
+    }
+
+    tr:hover {
+      background: #f1e7d6;
     }
 
     button {
-      background: #A7C4A0;
-      font-weight: 700;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
+      font-weight: 600;
     }
 
-    button:hover {
-      filter: brightness(1.05);
+    .delete {
+      background: #d9534f;
+      color: white;
     }
 
-    #admin-panel {
-      display: none;
-      margin-top: 2rem;
+    .invoice {
+      background: #A7C4A0;
+      color: #3A2F25;
     }
 
-    .error {
-      color: red;
-      margin-top: 1rem;
-      display: none;
+    input {
+      padding: 6px 8px;
+      margin: 3px 0;
+      border-radius: 6px;
+      border: 1px solid #b9a58a;
+      width: 100%;
+      max-width: 260px;
     }
 
-    ul {
-      background: #fff;
-      padding: 1rem;
-      border-radius: 0.6rem;
-      border: 2px solid #5A4633;
+    .form-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      border: 1px solid #d2c1a5;
+      max-width: 600px;
     }
   </style>
 </head>
 
 <body>
 
-<h1>Administration</h1>
+<h1>📋 Administration – Les Tonneaux des Ô</h1>
 
-<!-- LOGIN -->
-<div class="box" id="login-box">
-  <label>Mot de passe admin</label>
-  <input type="password" id="password">
-  <button onclick="login()">Connexion</button>
-  <div id="error" class="error"></div>
+<h2>Créer une réservation</h2>
+<div class="form-container">
+  <label>Bungalow :</label><br>
+  <input id="bungalow" type="text"><br>
+
+  <label>Nom :</label><br>
+  <input id="name" type="text"><br>
+
+  <label>Email :</label><br>
+  <input id="email" type="email"><br>
+
+  <label>Date arrivée :</label><br>
+  <input id="dateArrivee" type="date"><br>
+
+  <label>Date départ :</label><br>
+  <input id="dateDepart" type="date"><br>
+
+  <label>Prix (€) :</label><br>
+  <input id="price" type="number"><br><br>
+
+  <button onclick="createReservation()" style="padding:10px 20px;background:#A7C4A0;border:none;border-radius:8px;font-weight:700;">
+    ➕ Créer la réservation
+  </button>
 </div>
 
-<!-- PANEL ADMIN -->
-<div id="admin-panel">
-
-  <h2>Panneau d'administration</h2>
-
-  <!-- Voir les réservations -->
-  <button onclick="chargerReservations()">Voir les réservations</button>
-  <div id="reservations"></div>
-
-  <hr><br>
-
-  <!-- Bloquer une date -->
-  <h3>Bloquer une date</h3>
-
-  <label>Bungalow</label>
-  <select id="bungalowBlock">
-    <option value="bungalow1">Bungalow 1</option>
-    <option value="bungalow2">Bungalow 2</option>
-  </select>
-
-  <label>Date à bloquer</label>
-  <input type="date" id="dateBlock">
-
-  <button onclick="bloquerDate()">Bloquer</button>
-  <div id="block-result"></div>
-
-  <hr><br>
-
-  <!-- Débloquer une date -->
-  <h3>Débloquer une date</h3>
-
-  <label>Bungalow</label>
-  <select id="bungalowUnblock">
-    <option value="bungalow1">Bungalow 1</option>
-    <option value="bungalow2">Bungalow 2</option>
-  </select>
-
-  <label>Date à débloquer</label>
-  <input type="date" id="dateUnblock">
-
-  <button onclick="debloquerDate()">Débloquer</button>
-  <div id="unblock-result"></div>
-
-</div>
+<h2>Réservations</h2>
+<table id="table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Bungalow</th>
+      <th>Nom</th>
+      <th>Email</th>
+      <th>Arrivée</th>
+      <th>Départ</th>
+      <th>Prix</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
 <script>
-const ADMIN_PASSWORD = "Ev017846@"; // change ici
+const BASE_URL = "https://h-e5oa.onrender.com";
 
-// ----------------------
-// LOGIN
-// ----------------------
-function login() {
-  const pass = document.getElementById("password").value;
-
-  if (pass !== ADMIN_PASSWORD) {
-    document.getElementById("error").textContent = "Mot de passe incorrect";
-    document.getElementById("error").style.display = "block";
-    return;
-  }
-
-  document.getElementById("login-box").style.display = "none";
-  document.getElementById("admin-panel").style.display = "block";
-}
-
-// ----------------------
-// VOIR LES RÉSERVATIONS
-// ----------------------
-async function chargerReservations() {
-  const res = await fetch("https://h-e5oa.onrender.com/api/reservations");
+async function loadReservations() {
+  const res = await fetch(`${BASE_URL}/api/reservations`);
   const data = await res.json();
 
-  if (data.length === 0) {
-    document.getElementById("reservations").innerHTML = "<p>Aucune réservation.</p>";
-    return;
+  const tbody = document.querySelector("tbody");
+  tbody.innerHTML = "";
+
+  data.forEach((r, index) => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${index}</td>
+      <td>${r.bungalow}</td>
+      <td>${r.name}</td>
+      <td>${r.email}</td>
+      <td>${r.dateArrivee}</td>
+      <td>${r.dateDepart}</td>
+      <td>${r.price} €</td>
+      <td>
+        <button class="invoice" onclick="downloadInvoice(${index})">📄 Facture</button>
+        <button class="delete" onclick="deleteReservation(${index})">🗑 Supprimer</button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function downloadInvoice(id) {
+  window.location.href = `${BASE_URL}/api/admin/invoice/${id}`;
+}
+
+async function deleteReservation(id) {
+  if (!confirm("Supprimer cette réservation ?")) return;
+
+  const res = await fetch(`${BASE_URL}/api/reservations`);
+  const data = await res.json();
+
+  data.splice(id, 1);
+
+  await fetch(`${BASE_URL}/api/reservations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+  loadReservations();
+}
+
+async function createReservation() {
+  const bungalow = document.getElementById("bungalow").value;
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const dateArrivee = document.getElementById("dateArrivee").value;
+  const dateDepart = document.getElementById("dateDepart").value;
+  const price = document.getElementById("price").value;
+
+  const res = await fetch(`${BASE_URL}/api/admin/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bungalow, name, email, dateArrivee, dateDepart, price })
+  });
+
+  const json = await res.json();
+
+  if (json.success) {
+    alert("Réservation créée !");
+    document.getElementById("bungalow").value = "";
+    document.getElementById("name").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("dateArrivee").value = "";
+    document.getElementById("dateDepart").value = "";
+    document.getElementById("price").value = "";
+    loadReservations();
+  } else {
+    alert("Erreur : " + json.error);
   }
-
-  let html = "<ul>";
-  data.forEach(r => {
-    html += `<li><b>${r.bungalow}</b> — ${r.dateArrivee} → ${r.dateDepart} — ${r.name}</li>`;
-  });
-  html += "</ul>";
-
-  document.getElementById("reservations").innerHTML = html;
 }
 
-// ----------------------
-// BLOQUER UNE DATE
-// ----------------------
-async function bloquerDate() {
-  const bungalow = document.getElementById("bungalowBlock").value;
-  const date = document.getElementById("dateBlock").value;
-
-  const res = await fetch("https://h-e5oa.onrender.com/api/block-date", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ bungalow, date })
-  });
-
-  const json = await res.json();
-  document.getElementById("block-result").textContent = json.message;
-}
-
-// ----------------------
-// DÉBLOQUER UNE DATE
-// ----------------------
-async function debloquerDate() {
-  const bungalow = document.getElementById("bungalowUnblock").value;
-  const date = document.getElementById("dateUnblock").value;
-
-  const res = await fetch("https://h-e5oa.onrender.com/api/unblock-date", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ bungalow, date })
-  });
-
-  const json = await res.json();
-  document.getElementById("unblock-result").textContent = json.message;
-}
+loadReservations();
 </script>
 
 </body>
