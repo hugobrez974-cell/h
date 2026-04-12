@@ -52,17 +52,34 @@
       font-size: 1.1rem;
       line-height: 1.6;
     }
+
+    img.logo {
+      width: 220px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 
 <body>
 
 <div class="box">
+
+  <!-- 🔥 TON LOGO -->
+  <img src="/logo.png" class="logo" alt="Les Tonneaux des Ô">
+  <h3>Les Tonneaux des Ô</h3>
+  <p>Séjour nature et détente à Bois Court</p>
+
   <h1>🎉 Paiement réussi !</h1>
 
-  <div id="details" class="info"></div>
+  <div id="details" class="info">
+    Chargement des informations…
+  </div>
 
-  <button id="facture-btn" class="btn">Télécharger la facture</button>
+  <!-- 🔥 Bouton facture Stripe -->
+  <button id="facture-btn" class="btn">Télécharger la facture Stripe</button>
+
+  <!-- 🔥 Bouton facture personnalisée -->
+  <button id="facture-custom" class="btn" style="background:#D9B77A;">Télécharger la facture personnalisée</button>
 
   <br><br>
 
@@ -74,14 +91,12 @@ async function loadInvoice() {
   const sessionId = new URLSearchParams(window.location.search).get("session_id");
   if (!sessionId) return;
 
-  // Récupération de la facture Stripe
+  // 🔥 Récupération de la facture Stripe
   const res = await fetch(`https://h-e5oa.onrender.com/api/invoice/${sessionId}`);
   const json = await res.json();
-
-  // Stockage du lien PDF
   window.invoiceUrl = json.url;
 
-  // Récupération des infos de réservation
+  // 🔥 Récupération des infos de réservation
   const res2 = await fetch("https://h-e5oa.onrender.com/api/reservations");
   const all = await res2.json();
 
@@ -94,7 +109,7 @@ async function loadInvoice() {
     <b>Montant :</b> ${reservation.price} €
   `;
 
-  // Téléchargement automatique de la facture
+  // 🔥 Téléchargement automatique de la facture Stripe
   if (window.invoiceUrl) {
     setTimeout(() => {
       window.location.href = window.invoiceUrl;
@@ -102,8 +117,15 @@ async function loadInvoice() {
   }
 }
 
+// 🔥 Bouton facture Stripe
 document.getElementById("facture-btn").onclick = () => {
   if (window.invoiceUrl) window.location.href = window.invoiceUrl;
+};
+
+// 🔥 Bouton facture personnalisée
+document.getElementById("facture-custom").onclick = () => {
+  const sessionId = new URLSearchParams(window.location.search).get("session_id");
+  window.location.href = `https://h-e5oa.onrender.com/api/custom-invoice/${sessionId}`;
 };
 
 loadInvoice();
