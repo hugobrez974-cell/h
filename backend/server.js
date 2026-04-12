@@ -49,11 +49,12 @@ app.post("/api/create-checkout-session", async (req, res) => {
           quantity: 1,
         },
       ],
-      success_url: "https://les-tonneaux-des-o.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: "https://les-tonneaux-des-o.onrender.com/cancel.html?session_id={CHECKOUT_SESSION_ID}",
+      success_url:
+        "https://les-tonneaux-des-o.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
+      cancel_url:
+        "https://les-tonneaux-des-o.onrender.com/cancel.html?session_id={CHECKOUT_SESSION_ID}",
     });
 
-    // Sauvegarde
     const reservations = loadReservations();
     reservations.push({
       bungalow,
@@ -82,13 +83,56 @@ app.get("/api/reservations", (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 ROUTE : FACTURE PDF PERSONNALISÉE
+// 🔥 ROUTE : FACTURE STRIPE (PDF OFFICIEL STRIPE)
+// ---------------------------------------------------------
+app.get("/api/invoice/:sessionId", async (req, res) => {
+  try {
+    const session = await stripe.checkout.sessions.retrieve(
+      req.params.sessionId
+    );
+
+    if (!session.invoice) {
+      return res.status(404).json({ error: "Aucune facture Stripe trouvée" });
+    }
+
+    const invoice = await stripe.invoices.retrieve(session.invoice);
+
+    if (!invoice.invoice_pdf) {
+      return res.status(404).json({ error: "PDF de facture indisponible" });
+    }
+
+    res.json({ url: invoice.invoice_pdf });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Erreur lors de la récupération facture" });
+  }
+});
+
+// ---------------------------------------------------------
+// 🔥 ROUTE : FACTURE PDF PERSONNALISÉE (CLIENT)
 // ---------------------------------------------------------
 app.get("/api/custom-invoice/:sessionId", (req, res) => {
-  const sessionId = req.params.sessionId;
-  const reservations = loadReservations();
-  const reservation = reservations.find(r => r.sessionId === sessionId);
+  generateInvoice(res, loadReservations().find(r => r.sessionId === req.params.sessionId), req.params.sessionId);
+});
 
+// ---------------------------------------------------------
+// 🔥 ROUTE ADMIN : FACTURE PAR ID (SANS STRIPE)
+// ---------------------------------------------------------
+app.get("/api/admin/invoice/:id", (req, res) => {
+  const reservations = loadReservations();
+  const reservation = reservations[req.params.id];
+
+  if (!reservation) {
+    return res.status(404).send("Réservation introuvable");
+  }
+
+  generateInvoice(res, reservation, req.params.id);
+});
+
+// ---------------------------------------------------------
+// 🔥 FONCTION GÉNÉRATION PDF (UTILISÉE PAR LES 2 ROUTES)
+// ---------------------------------------------------------
+function generateInvoice(res, reservation, invoiceId) {
   if (!reservation) {
     return res.status(404).send("Réservation introuvable");
   }
@@ -98,12 +142,12 @@ app.get("/api/custom-invoice/:sessionId", (req, res) => {
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename=facture-${sessionId}.pdf`
+    `attachment; filename=facture-${invoiceId}.pdf`
   );
 
   doc.pipe(res);
 
-  // LOGO
+  // LOGO (à la racine du backend)
   const logoPath = path.join(process.cwd(), "logo_official.png");
   if (fs.existsSync(logoPath)) {
     doc.image(logoPath, 40, 40, { width: 140 });
@@ -119,7 +163,7 @@ app.get("/api/custom-invoice/:sessionId", (req, res) => {
   doc.fontSize(16).text("Facture", { underline: true });
   doc.moveDown();
 
-  doc.fontSize(12).text(`Numéro de facture : ${sessionId}`);
+  doc.fontSize(12).text(`Numéro de facture : ${invoiceId}`);
   doc.text(`Date : ${new Date().toLocaleDateString("fr-FR")}`);
   doc.moveDown();
 
@@ -139,19 +183,18 @@ app.get("/api/custom-invoice/:sessionId", (req, res) => {
   doc.text(`Arrivée : ${reservation.dateArrivee}`);
   doc.text(`Départ : ${reservation.dateDepart}`);
   doc.text(`Montant : ${reservation.price} €`);
-  doc.moveDown();
-
-  // MESSAGE FINAL
   doc.moveDown(2);
+
   doc.fontSize(12).text("Merci pour votre confiance !");
   doc.text("À très bientôt aux Tonneaux des Ô.");
 
   doc.end();
-});
+}
 
 // ---------------------------------------------------------
 // 🔥 LANCEMENT SERVEUR
 // ---------------------------------------------------------
-app.listen(3000, () => {
-  console.log("Serveur lancé sur le port 3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Serveur lancé sur le port " + PORT);
 });
