@@ -2,229 +2,162 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Réserver – Les tonneaux des Ô</title>
+  <title>Réserver – Les Tonneaux des Ô</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <style>
-    :root {
-      --bois: #5A4633;
-      --sable: #F4E9D8;
-      --vert: #A7C4A0;
-      --blanc: #d6c7a0;
-      --texte: #3A2F25;
-    }
-    .btn-retour {
-  display:inline-block;
-  padding:0.6rem 1.2rem;
-  background:#a7c4a0;
-  color:#3A2F25;
-  border:none;
-  border-radius:999px;
-  font-weight:700;
-  cursor:pointer;
-  margin-bottom:1rem;
-}
-.btn-retour:hover {
-  background:#8fb48a;
-}
-
-    body {
-      margin: 0;
-      font-family: 'Nunito', sans-serif;
-      background: var(--sable);
-      color: var(--texte);
-      padding: 2rem;
-    }
-
-    h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 2rem;
-      color: var(--bois);
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .container {
-      max-width: 450px;
-      margin: auto;
-      background: var(--blanc);
-      padding: 2rem;
-      border-radius: 1rem;
-      border: 2px solid var(--bois);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    }
-
-    label {
-      display: block;
-      margin-top: 1rem;
-      font-weight: 600;
-      color: var(--bois);
-    }
-
-    input, select {
-      width: 100%;
-      padding: 0.8rem;
-      margin-top: 0.4rem;
-      border-radius: 0.6rem;
-      border: 2px solid var(--bois);
-      background: #fff;
-      font-size: 1rem;
-      color: var(--texte);
-    }
-
-    .btn {
-      margin-top: 1.5rem;
-      width: 100%;
-      padding: 0.9rem;
-      background: var(--vert);
-      color: var(--bois);
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      border: 2px solid var(--bois);
-      cursor: pointer;
-    }
-
-    .btn:hover { filter: brightness(1.05); }
-
-    .error {
-      margin-top: 1rem;
-      color: red;
-      text-align: center;
-      display: none;
-    }
-  </style>
 </head>
 
 <body>
-  <button onclick="window.location.href='main.html'" class="btn-retour">
-  ← Retour à l'acceuil
-</button>
 
+<!-- NAVBAR -->
+<style>
+  .nav {
+    background: #5A4633;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    border-bottom: 3px solid #D9C7A3;
+  }
+  .nav a {
+    color: #F4E9D8;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+  .nav a:hover {
+    color: #A7C4A0;
+  }
+</style>
 
-<h1>Réserver votre séjour</h1>
+<div class="nav">
+  <a href="main.html">Accueil</a>
+  <a href="dispo.html">Disponibilités</a>
+  <a href="reservation.html">Réserver</a>
+  <a href="main.html">Nos bungalows</a>
+  <a href="contact.html">Contact</a>
+</div>
 
-<div class="container">
+<style>
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #F4E9D8;
+    color: #3A2F25;
+    padding: 2rem;
+  }
+  .box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #5A4633;
+    max-width: 500px;
+    margin: auto;
+  }
+  input, select {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid #b9a58a;
+  }
+  .btn {
+    background: #A7C4A0;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+  }
+  .btn:hover {
+    background: #8fb48a;
+  }
+  .result {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    text-align: center;
+  }
+</style>
 
-  <label>Bungalow</label>
+<div class="box">
+  <h2>Réserver un bungalow</h2>
+
+  <label>Bungalow :</label>
   <select id="bungalow">
-    <option value="bungalow1">Bungalow 1</option>
-    <option value="bungalow2">Bungalow 2</option>
+    <option value="1">Bungalow 1</option>
+    <option value="2">Bungalow 2</option>
   </select>
 
-  <label>Nom complet</label>
+  <label>Nom :</label>
   <input type="text" id="name">
 
-  <label>Email</label>
+  <label>Email :</label>
   <input type="email" id="email">
 
-  <label>Date d'arrivée</label>
+  <label>Date d’arrivée :</label>
   <input type="date" id="dateArrivee">
 
-  <label>Date de départ</label>
+  <label>Date de départ :</label>
   <input type="date" id="dateDepart">
 
-  <label>Prix total (€)</label>
-  <input type="number" id="price" value="0" readonly>
+  <label>Prix (€) :</label>
+  <input type="number" id="price">
 
-  <button class="btn" onclick="payer()">Payer</button>
+  <button class="btn" onclick="pay()">Payer et réserver</button>
 
-  <div id="error" class="error"></div>
+  <div id="result" class="result"></div>
 </div>
 
 <script>
-// -----------------------------
-// 🔥 Pré-remplissage depuis Dispo.html
-// -----------------------------
-const params = new URLSearchParams(window.location.search);
-const bungalow = params.get("bungalow");
-const date = params.get("date");
+const BASE_URL = "https://h-e5oa.onrender.com";
 
-if (bungalow) {
-  document.getElementById("bungalow").value = bungalow;
-}
+async function pay() {
+  const bungalow = document.getElementById("bungalow").value;
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const dateA = document.getElementById("dateArrivee").value;
+  const dateD = document.getElementById("dateDepart").value;
+  const price = document.getElementById("price").value;
 
-if (date) {
-  document.getElementById("dateArrivee").value = date;
-
-  const d = new Date(date);
-  d.setDate(d.getDate() + 1);
-  const iso = d.toISOString().split("T")[0];
-  document.getElementById("dateDepart").value = iso;
-}
-
-// -----------------------------
-// 🔥 Calcul du prix variable
-// -----------------------------
-function calculerPrix() {
-  const d1 = new Date(document.getElementById("dateArrivee").value);
-  const d2 = new Date(document.getElementById("dateDepart").value);
-
-  if (isNaN(d1) || isNaN(d2)) return;
-
-  let total = 0;
-
-  for (let d = new Date(d1); d < d2; d.setDate(d.getDate() + 1)) {
-    const jour = d.getDay(); // 5 = vendredi, 6 = samedi
-    total += (jour === 5 || jour === 6) ? 150 : 130;
-  }
-
-  document.getElementById("price").value = total;
-}
-
-document.getElementById("dateArrivee").addEventListener("change", calculerPrix);
-document.getElementById("dateDepart").addEventListener("change", calculerPrix);
-
-setTimeout(calculerPrix, 200);
-
-// -----------------------------
-// 🔥 Paiement Stripe
-// -----------------------------
-async function payer() {
-  const data = {
-    bungalow: document.getElementById("bungalow").value,
-    name: document.getElementById("name").value.trim(),
-    email: document.getElementById("email").value.trim(),
-    dateArrivee: document.getElementById("dateArrivee").value,
-    dateDepart: document.getElementById("dateDepart").value,
-    price: parseInt(document.getElementById("price").value)
-  };
-
-  if (!data.name || !data.email || !data.dateArrivee || !data.dateDepart) {
-    showError("Merci de remplir tous les champs.");
+  if (!name || !email || !dateA || !dateD || !price) {
+    document.getElementById("result").innerHTML = "❌ Veuillez remplir tous les champs.";
     return;
   }
 
-  if (data.price <= 0) {
-    showError("La date de départ doit être après la date d'arrivée.");
+  // Vérifier disponibilité
+  const res = await fetch(`${BASE_URL}/api/reservations`);
+  const data = await res.json();
+
+  const overlap = data.some(r =>
+    r.bungalow == bungalow &&
+    !(dateD <= r.dateArrivee || dateA >= r.dateDepart)
+  );
+
+  if (overlap) {
+    document.getElementById("result").innerHTML = "❌ Ce bungalow est occupé.";
     return;
   }
 
-  try {
-    const res = await fetch("https://h-e5oa.onrender.com/api/create-checkout-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
+  // Lancer Stripe
+  const session = await fetch(`${BASE_URL}/api/create-checkout-session`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      bungalow,
+      name,
+      email,
+      dateArrivee: dateA,
+      dateDepart: dateD,
+      price
+    })
+  });
 
-    const json = await res.json();
+  const json = await session.json();
 
-    if (!json.url) {
-      showError("Erreur lors de la création du paiement.");
-      return;
-    }
-
+  if (json.url) {
     window.location.href = json.url;
-
-  } catch (e) {
-    showError("Impossible de contacter le serveur.");
+  } else {
+    document.getElementById("result").innerHTML = "❌ Erreur lors du paiement.";
   }
-}
-
-function showError(msg) {
-  const box = document.getElementById("error");
-  box.textContent = msg;
-  box.style.display = "block";
 }
 </script>
 
