@@ -27,7 +27,7 @@ function saveReservations(data) {
 }
 
 // ---------------------------------------------------------
-// 🔥 CRÉATION SESSION STRIPE
+// 🔥 CRÉATION SESSION STRIPE (RÉSA CLASSIQUE CLIENT)
 // ---------------------------------------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
   const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
@@ -50,9 +50,9 @@ app.post("/api/create-checkout-session", async (req, res) => {
         },
       ],
       success_url:
-        "https://h-1-y7xu.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
+        "https://les-tonneaux-des-o.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
       cancel_url:
-        "https://h-1-y7xu.onrender.com/cancel.html?session_id={CHECKOUT_SESSION_ID}",
+        "https://les-tonneaux-des-o.onrender.com/cancel.html?session_id={CHECKOUT_SESSION_ID}",
     });
 
     const reservations = loadReservations();
@@ -64,6 +64,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
       dateDepart,
       price,
       sessionId: session.id,
+      status: "paid",
       createdAt: new Date().toISOString(),
     });
     saveReservations(reservations);
@@ -83,7 +84,7 @@ app.get("/api/reservations", (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 SAUVEGARDE DES RÉSERVATIONS (ADMIN SUPPRESSION)
+// 🔥 SAUVEGARDE DES RÉSERVATIONS (ADMIN SUPPRESSION / MODIF)
 // ---------------------------------------------------------
 app.post("/api/reservations", (req, res) => {
   const data = req.body;
@@ -126,7 +127,7 @@ app.get("/api/invoice/:sessionId", async (req, res) => {
 app.get("/api/custom-invoice/:sessionId", (req, res) => {
   const reservations = loadReservations();
   const reservation = reservations.find(
-    r => r.sessionId === req.params.sessionId
+    (r) => r.sessionId === req.params.sessionId
   );
   generateInvoice(res, reservation, req.params.sessionId);
 });
@@ -141,7 +142,7 @@ app.get("/api/admin/invoice/:id", (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 ADMIN : CRÉER UNE RÉSERVATION
+// 🔥 ADMIN : CRÉER UNE PRÉ-RÉSERVATION (BLOQUER LES DATES)
 // ---------------------------------------------------------
 app.post("/api/admin/create", (req, res) => {
   const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
@@ -159,7 +160,7 @@ app.post("/api/admin/create", (req, res) => {
     dateArrivee,
     dateDepart,
     price,
-    sessionId: "admin-" + Date.now(),
+    status: "pending", // 🔒 dates bloquées, en attente de paiement
     createdAt: new Date().toISOString(),
   };
 
@@ -167,6 +168,54 @@ app.post("/api/admin/create", (req, res) => {
   saveReservations(reservations);
 
   res.json({ success: true, reservation: newReservation });
+});
+
+// ---------------------------------------------------------
+// 🔥 ADMIN : CRÉER UN LIEN DE PAIEMENT POUR UNE RÉSA EXISTANTE
+// ---------------------------------------------------------
+app.post("/api/admin/create-payment-link", async (req, res) => {
+  const { bungalow, name, email, dateArrivee, dateDepart, price, index } =
+    req.body;
+
+  if (!bungalow || !name || !email || !dateArrivee || !dateDepart || !price) {
+    return res.status(400).json({ error: "Champs manquants" });
+  }
+
+  try {
+    // 1️⃣ Créer un produit Stripe temporaire
+    const product = await stripe.products.create({
+      name: `Réservation Bungalow ${bungalow} (${dateArrivee} → ${dateDepart})`,
+    });
+
+    const priceStripe = await stripe.prices.create({
+      product: product.id,
+      unit_amount: price * 100,
+      currency: "eur",
+    });
+
+    // 2️⃣ Créer un lien de paiement
+    const paymentLink = await stripe.paymentLinks.create({
+      line_items: [{ price: priceStripe.id, quantity: 1 }],
+      after_completion: {
+        type: "redirect",
+        redirect: {
+          url: "https://les-tonneaux-des-o.onrender.com/success.html",
+        },
+      },
+    });
+
+    // 3️⃣ Mettre à jour la réservation avec le lien
+    const reservations = loadReservations();
+    if (typeof index === "number" && reservations[index]) {
+      reservations[index].paymentLink = paymentLink.url;
+      saveReservations(reservations);
+    }
+
+    res.json({ success: true, url: paymentLink.url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur Stripe" });
+  }
 });
 
 // ---------------------------------------------------------
@@ -222,7 +271,7 @@ function generateInvoice(res, reservation, invoiceId) {
 
   doc.fontSize(12).text("Merci pour votre confiance !");
   doc.text("À très bientôt aux Tonneaux des Ô.");
-  doc.text("Nous contacter au +262 693 63 66 81 ou par nos reseaux sociaux")
+  doc.text("Nous contacter au +262 693 63 66 81 ou par nos réseaux sociaux");
 
   doc.end();
 }
