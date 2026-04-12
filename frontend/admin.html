@@ -4,93 +4,138 @@
   <meta charset="UTF-8">
   <title>Admin – Les Tonneaux des Ô</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <style>
-    body {
-      font-family: 'Nunito', sans-serif;
-      background: #F4E9D8;
-      color: #3A2F25;
-      padding: 2rem;
-    }
-
-    h1, h2 {
-      color: #5A4633;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid #ddd;
-      text-align: center;
-    }
-
-    th {
-      background: #5A4633;
-      color: white;
-    }
-
-    tr:hover {
-      background: #f1e7d6;
-    }
-
-    button {
-      padding: 8px 12px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    .delete {
-      background: #d9534f;
-      color: white;
-    }
-
-    .invoice {
-      background: #A7C4A0;
-      color: #3A2F25;
-    }
-
-    input {
-      padding: 6px 8px;
-      margin: 3px 0;
-      border-radius: 6px;
-      border: 1px solid #b9a58a;
-      width: 100%;
-      max-width: 260px;
-    }
-
-    .form-container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 30px;
-      border: 1px solid #d2c1a5;
-      max-width: 600px;
-    }
-  </style>
 </head>
 
 <body>
 
+<!-- NAVBAR -->
+<style>
+  .nav {
+    background: #5A4633;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    border-bottom: 3px solid #D9C7A3;
+  }
+  .nav a {
+    color: #F4E9D8;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+  .nav a:hover {
+    color: #A7C4A0;
+  }
+</style>
+
+<div class="nav">
+  <a href="main.html">Accueil</a>
+  <a href="dispo.html">Disponibilités</a>
+  <a href="resa.html">Réserver</a>
+  <a href="nos-bungalows.html">Nos bungalows</a>
+  <a href="contact.html">Contact</a>
+</div>
+
+<style>
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #F4E9D8;
+    color: #3A2F25;
+    padding: 2rem;
+  }
+
+  h1, h2 {
+    color: #5A4633;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+
+  th, td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+  }
+
+  th {
+    background: #5A4633;
+    color: white;
+  }
+
+  tr:hover {
+    background: #f1e7d6;
+  }
+
+  button {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    margin: 2px;
+  }
+
+  .delete {
+    background: #d9534f;
+    color: white;
+  }
+
+  .invoice {
+    background: #A7C4A0;
+    color: #3A2F25;
+  }
+
+  .paylink {
+    background: #f0ad4e;
+    color: #3A2F25;
+  }
+
+  .send {
+    background: #5bc0de;
+    color: white;
+  }
+
+  input, select {
+    padding: 6px 8px;
+    margin: 3px 0;
+    border-radius: 6px;
+    border: 1px solid #b9a58a;
+    width: 100%;
+    max-width: 260px;
+  }
+
+  .form-container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    border: 1px solid #d2c1a5;
+    max-width: 700px;
+  }
+</style>
+
 <h1>📋 Administration – Les Tonneaux des Ô</h1>
 
-<h2>Créer une réservation</h2>
+<h2>Créer une pré-réservation (bloquer les dates)</h2>
 <div class="form-container">
   <label>Bungalow :</label><br>
-  <input id="bungalow" type="text"><br>
+  <select id="bungalow">
+    <option value="1">Bungalow 1</option>
+    <option value="2">Bungalow 2</option>
+    <option value="3">Bungalow 3</option>
+  </select><br>
 
   <label>Nom :</label><br>
   <input id="name" type="text"><br>
@@ -104,11 +149,11 @@
   <label>Date départ :</label><br>
   <input id="dateDepart" type="date"><br>
 
-  <label>Prix (€) :</label><br>
-  <input id="price" type="number"><br><br>
+  <label>Prix total (€) :</label><br>
+  <input id="price" type="number" readonly><br><br>
 
   <button onclick="createReservation()" style="padding:10px 20px;background:#A7C4A0;border:none;border-radius:8px;font-weight:700;">
-    ➕ Créer la réservation
+    ➕ Bloquer les dates (pré-réservation)
   </button>
 </div>
 
@@ -123,6 +168,8 @@
       <th>Arrivée</th>
       <th>Départ</th>
       <th>Prix</th>
+      <th>Status</th>
+      <th>Lien paiement</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -132,6 +179,40 @@
 <script>
 const BASE_URL = "https://h-e5oa.onrender.com";
 
+// 🔥 TARIFS : 130€ dim-jeu, 150€ ven-sam
+function getNightPrice(date) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = dimanche, 6 = samedi
+  if (day === 5 || day === 6) return 150;
+  return 130;
+}
+
+function updatePriceForm() {
+  const dateA = document.getElementById("dateArrivee").value;
+  const dateD = document.getElementById("dateDepart").value;
+  if (!dateA || !dateD) return;
+
+  const d1 = new Date(dateA);
+  const d2 = new Date(dateD);
+  const nights = (d2 - d1) / (1000 * 60 * 60 * 24);
+  if (nights <= 0) {
+    document.getElementById("price").value = "";
+    return;
+  }
+
+  let total = 0;
+  let current = new Date(dateA);
+  for (let i = 0; i < nights; i++) {
+    total += getNightPrice(current);
+    current.setDate(current.getDate() + 1);
+  }
+  document.getElementById("price").value = total;
+}
+
+document.getElementById("dateArrivee").addEventListener("change", updatePriceForm);
+document.getElementById("dateDepart").addEventListener("change", updatePriceForm);
+
+// 🔥 Charger les réservations
 async function loadReservations() {
   const res = await fetch(`${BASE_URL}/api/reservations`);
   const data = await res.json();
@@ -144,14 +225,18 @@ async function loadReservations() {
 
     tr.innerHTML = `
       <td>${index}</td>
-      <td>${r.bungalow}</td>
-      <td>${r.name}</td>
-      <td>${r.email}</td>
-      <td>${r.dateArrivee}</td>
-      <td>${r.dateDepart}</td>
-      <td>${r.price} €</td>
+      <td>${r.bungalow || ""}</td>
+      <td>${r.name || ""}</td>
+      <td>${r.email || ""}</td>
+      <td>${r.dateArrivee || ""}</td>
+      <td>${r.dateDepart || ""}</td>
+      <td>${r.price ? r.price + " €" : ""}</td>
+      <td>${r.status || ""}</td>
+      <td>${r.paymentLink ? '<a href="' + r.paymentLink + '" target="_blank">Lien</a>' : ''}</td>
       <td>
         <button class="invoice" onclick="downloadInvoice(${index})">📄 Facture</button>
+        <button class="paylink" onclick="createPaymentLink(${index})">💳 Lien paiement</button>
+        <button class="send" onclick="sendPaymentLink(${index})">📨 Envoyer lien</button>
         <button class="delete" onclick="deleteReservation(${index})">🗑 Supprimer</button>
       </td>
     `;
@@ -160,10 +245,117 @@ async function loadReservations() {
   });
 }
 
+// 🔥 Créer une pré-réservation (bloque les dates)
+async function createReservation() {
+  const bungalow = document.getElementById("bungalow").value;
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const dateArrivee = document.getElementById("dateArrivee").value;
+  const dateDepart = document.getElementById("dateDepart").value;
+  const price = document.getElementById("price").value;
+
+  if (!bungalow || !name || !email || !dateArrivee || !dateDepart || !price) {
+    alert("Champs manquants");
+    return;
+  }
+
+  // Vérifier si déjà occupé
+  const res = await fetch(`${BASE_URL}/api/reservations`);
+  const data = await res.json();
+
+  const overlap = data.some(r =>
+    r.bungalow == bungalow &&
+    !(dateDepart <= r.dateArrivee || dateArrivee >= r.dateDepart)
+  );
+
+  if (overlap) {
+    alert("Ce bungalow est déjà occupé sur ces dates.");
+    return;
+  }
+
+  const res2 = await fetch(`${BASE_URL}/api/admin/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bungalow, name, email, dateArrivee, dateDepart, price })
+  });
+
+  const json = await res2.json();
+
+  if (json.success) {
+    alert("Pré-réservation créée (dates bloquées).");
+    document.getElementById("name").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("dateArrivee").value = "";
+    document.getElementById("dateDepart").value = "";
+    document.getElementById("price").value = "";
+    loadReservations();
+  } else {
+    alert("Erreur : " + json.error);
+  }
+}
+
+// 🔥 Générer un lien de paiement Stripe pour une résa
+async function createPaymentLink(index) {
+  const res = await fetch(`${BASE_URL}/api/reservations`);
+  const data = await res.json();
+  const r = data[index];
+
+  if (!r) {
+    alert("Réservation introuvable");
+    return;
+  }
+
+  const response = await fetch(`${BASE_URL}/api/admin/create-payment-link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...r,
+      index
+    })
+  });
+
+  const json = await response.json();
+
+  if (json.success) {
+    alert("Lien généré et copié : " + json.url);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(json.url);
+    }
+    loadReservations();
+  } else {
+    alert("Erreur : " + json.error);
+  }
+}
+
+// 🔥 Envoyer le lien de paiement au client (mailto)
+async function sendPaymentLink(index) {
+  const res = await fetch(`${BASE_URL}/api/reservations`);
+  const data = await res.json();
+  const r = data[index];
+
+  if (!r || !r.paymentLink) {
+    alert("Aucun lien de paiement pour cette réservation.");
+    return;
+  }
+
+  const message = `Bonjour ${r.name},
+
+Voici votre lien de paiement pour votre réservation aux Tonneaux des Ô (Bungalow ${r.bungalow}, du ${r.dateArrivee} au ${r.dateDepart}) :
+
+${r.paymentLink}
+
+À très bientôt à Bois Court.`;
+
+  const url = `mailto:${r.email}?subject=Votre réservation aux Tonneaux des Ô&body=${encodeURIComponent(message)}`;
+  window.location.href = url;
+}
+
+// 🔥 Télécharger une facture PDF admin
 function downloadInvoice(id) {
   window.location.href = `${BASE_URL}/api/admin/invoice/${id}`;
 }
 
+// 🔥 Supprimer une réservation
 async function deleteReservation(id) {
   if (!confirm("Supprimer cette réservation ?")) return;
 
@@ -179,36 +371,6 @@ async function deleteReservation(id) {
   });
 
   loadReservations();
-}
-
-async function createReservation() {
-  const bungalow = document.getElementById("bungalow").value;
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const dateArrivee = document.getElementById("dateArrivee").value;
-  const dateDepart = document.getElementById("dateDepart").value;
-  const price = document.getElementById("price").value;
-
-  const res = await fetch(`${BASE_URL}/api/admin/create`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ bungalow, name, email, dateArrivee, dateDepart, price })
-  });
-
-  const json = await res.json();
-
-  if (json.success) {
-    alert("Réservation créée !");
-    document.getElementById("bungalow").value = "";
-    document.getElementById("name").value = "";
-    document.getElementById("email").value = "";
-    document.getElementById("dateArrivee").value = "";
-    document.getElementById("dateDepart").value = "";
-    document.getElementById("price").value = "";
-    loadReservations();
-  } else {
-    alert("Erreur : " + json.error);
-  }
 }
 
 loadReservations();
