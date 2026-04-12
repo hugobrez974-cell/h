@@ -1,185 +1,157 @@
 import express from "express";
 import cors from "cors";
-import Stripe from "stripe";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import Stripe from "stripe";
+import PDFDocument from "pdfkit";
 
 const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static("public"));
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-app.use(cors({
-  origin: "https://h-1-y7xu.onrender.com",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
-}));
+// 📌 Chemin vers data.json
+const dataPath = path.join(process.cwd(), "data.json");
 
-app.use(express.json());
+// 📌 Charger les réservations
+function loadReservations() {
+  if (!fs.existsSync(dataPath)) return [];
+  return JSON.parse(fs.readFileSync(dataPath, "utf8"));
+}
 
-// ------------------------------------------------------
-// SERVIR LES ICS
-// ------------------------------------------------------
-app.get("/icals/:bungalow.ics", (req, res) => {
-  const filePath = path.join(__dirname, "icals", `${req.params.bungalow}.ics`);
+// 📌 Sauvegarder les réservations
+function saveReservations(data) {
+  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
+}
 
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send("ICS introuvable");
-  }
-
-  res.setHeader("Content-Type", "text/calendar");
-  res.send(fs.readFileSync(filePath, "utf8"));
-});
-
-// ------------------------------------------------------
-// VOIR LES RÉSERVATIONS
-// ------------------------------------------------------
-app.get("/api/reservations", (req, res) => {
-  const filePath = path.join(__dirname, "data.json");
-
-  if (!fs.existsSync(filePath)) return res.json([]);
-
-  const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-  res.json(data);
-});
-
-// ------------------------------------------------------
-// BLOQUER UNE DATE
-// ------------------------------------------------------
-app.post("/api/block-date", (req, res) => {
-  const { bungalow, date } = req.body;
-
-  if (!bungalow || !date) {
-    return res.status(400).json({ message: "Champs manquants" });
-  }
-
-  const filePath = path.join(__dirname, "icals", `${bungalow}.ics`);
-
-  const d = date.replace(/-/g, "");
-
-  const event = `
-BEGIN:VEVENT
-DTSTART:${d}T000000
-DTEND:${d}T000100
-SUMMARY:Bloqué
-END:VEVENT
-`;
-
-  fs.appendFileSync(filePath, event);
-
-  res.json({ message: "Date bloquée !" });
-});
-
-// ------------------------------------------------------
-// DÉBLOQUER UNE DATE
-// ------------------------------------------------------
-app.post("/api/unblock-date", (req, res) => {
-  const { bungalow, date } = req.body;
-
-  const filePath = path.join(__dirname, "icals", `${bungalow}.ics`);
-
-  let ics = fs.readFileSync(filePath, "utf8");
-
-  const d = date.replace(/-/g, "");
-
-  const regex = new RegExp(
-    `BEGIN:VEVENT[\\s\\S]*?DTSTART:${d}T[0-9]{6}Z?[\\s\\S]*?END:VEVENT`,
-    "g"
-  );
-
-  const newIcs = ics.replace(regex, "").trim();
-
-  fs.writeFileSync(filePath, newIcs);
-
-  res.json({ message: "Date débloquée !" });
-});
-
-// ------------------------------------------------------
-// STRIPE CHECKOUT + FACTURE
-// ------------------------------------------------------
+// ---------------------------------------------------------
+// 🔥 ROUTE : CRÉATION SESSION STRIPE
+// ---------------------------------------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
+  const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
+
   try {
-    const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      customer_email: email,
+      line_items: [
+        {
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `Réservation Bungalow ${bungalow}`,
+            },
+            unit_amount: price * 100,
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: "https://les-tonneaux-des-o.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
+      cancel_url: "https://les-tonneaux-des-o.onrender.com/cancel.html?session_id={CHECKOUT_SESSION_ID}",
+    });
 
-    const filePath = path.join(__dirname, "data.json");
-    let data = [];
-
-    if (fs.existsSync(filePath)) {
-      data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    }
-
-    data.push({
+    // Sauvegarde
+    const reservations = loadReservations();
+    reservations.push({
       bungalow,
       name,
       email,
       dateArrivee,
       dateDepart,
       price,
-      createdAt: new Date().toISOString()
+      sessionId: session.id,
+      createdAt: new Date().toISOString(),
     });
-
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      customer_email: email,
-
-      // 🔥 Active la facture PDF
-      invoice_creation: {
-        enabled: true
-      },
-
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: {
-              name: `Réservation ${bungalow}`,
-              description: `Du ${dateArrivee} au ${dateDepart}`
-            },
-            unit_amount: price * 100
-          },
-          quantity: 1
-        }
-      ],
-      success_url: "https://h-1-y7xu.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: "https://h-1-y7xu.onrender.com/cancel.html"
-    });
+    saveReservations(reservations);
 
     res.json({ url: session.url });
-
-  } catch (err) {
-    console.error("Erreur Stripe :", err);
-    res.status(500).json({ error: "Erreur serveur Stripe" });
-  }
-});
-
-// ------------------------------------------------------
-// RÉCUPÉRER LA FACTURE PDF
-// ------------------------------------------------------
-app.get("/api/invoice/:sessionId", async (req, res) => {
-  try {
-    const session = await stripe.checkout.sessions.retrieve(req.params.sessionId);
-
-    if (!session.invoice) {
-      return res.json({ url: null });
-    }
-
-    const invoice = await stripe.invoices.retrieve(session.invoice);
-
-    res.json({ url: invoice.invoice_pdf });
-
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Erreur récupération facture" });
+    res.status(500).json({ error: "Erreur Stripe" });
   }
 });
 
-// ------------------------------------------------------
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log("Backend en ligne sur le port", PORT);
+// ---------------------------------------------------------
+// 🔥 ROUTE : LISTE DES RÉSERVATIONS
+// ---------------------------------------------------------
+app.get("/api/reservations", (req, res) => {
+  res.json(loadReservations());
+});
+
+// ---------------------------------------------------------
+// 🔥 ROUTE : FACTURE PDF PERSONNALISÉE
+// ---------------------------------------------------------
+app.get("/api/custom-invoice/:sessionId", (req, res) => {
+  const sessionId = req.params.sessionId;
+  const reservations = loadReservations();
+  const reservation = reservations.find(r => r.sessionId === sessionId);
+
+  if (!reservation) {
+    return res.status(404).send("Réservation introuvable");
+  }
+
+  const doc = new PDFDocument({ margin: 40 });
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=facture-${sessionId}.pdf`
+  );
+
+  doc.pipe(res);
+
+  // LOGO
+  const logoPath = path.join(process.cwd(), "logo_official.png");
+  if (fs.existsSync(logoPath)) {
+    doc.image(logoPath, 40, 40, { width: 140 });
+  }
+
+  // TITRE
+  doc.fontSize(22).text("Les Tonneaux des Ô", 200, 50);
+  doc.fontSize(12).text("Séjour nature et détente à Bois Court", 200, 75);
+
+  doc.moveDown(2);
+
+  // FACTURE
+  doc.fontSize(16).text("Facture", { underline: true });
+  doc.moveDown();
+
+  doc.fontSize(12).text(`Numéro de facture : ${sessionId}`);
+  doc.text(`Date : ${new Date().toLocaleDateString("fr-FR")}`);
+  doc.moveDown();
+
+  // CLIENT
+  doc.fontSize(14).text("Informations client", { underline: true });
+  doc.moveDown(0.5);
+
+  doc.fontSize(12).text(`Nom : ${reservation.name}`);
+  doc.text(`Email : ${reservation.email}`);
+  doc.moveDown();
+
+  // RÉSERVATION
+  doc.fontSize(14).text("Détails de la réservation", { underline: true });
+  doc.moveDown(0.5);
+
+  doc.fontSize(12).text(`Bungalow : ${reservation.bungalow}`);
+  doc.text(`Arrivée : ${reservation.dateArrivee}`);
+  doc.text(`Départ : ${reservation.dateDepart}`);
+  doc.text(`Montant : ${reservation.price} €`);
+  doc.moveDown();
+
+  // MESSAGE FINAL
+  doc.moveDown(2);
+  doc.fontSize(12).text("Merci pour votre confiance !");
+  doc.text("À très bientôt aux Tonneaux des Ô.");
+
+  doc.end();
+});
+
+// ---------------------------------------------------------
+// 🔥 LANCEMENT SERVEUR
+// ---------------------------------------------------------
+app.listen(3000, () => {
+  console.log("Serveur lancé sur le port 3000");
 });
