@@ -2,190 +2,135 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Disponibilités – Les tonneaux des Ô</title>
+  <title>Disponibilités – Les Tonneaux des Ô</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <style>
-  .btn-retour {
-  display:inline-block;
-  padding:0.6rem 1.2rem;
-  background:#a7c4a0;
-  color:#3A2F25;
-  border:none;
-  border-radius:999px;
-  font-weight:700;
-  cursor:pointer;
-  margin-bottom:1rem;
-}
-.btn-retour:hover {
-  background:#8fb48a;
-}
-
-    body{
-      font-family:sans-serif;
-      background:#f4e9d8;
-      color:#3A2F25;
-      padding:2rem;
-    }
-    h1{margin-bottom:1rem;}
-    label{margin-right:0.5rem;}
-    select{
-      padding:0.4rem 0.6rem;
-      margin-right:0.5rem;
-      border-radius:0.4rem;
-      border:1px solid #d0c2aa;
-    }
-    .cal{
-      display:grid;
-      grid-template-columns:repeat(7,1fr);
-      gap:4px;
-      margin-top:20px;
-      max-width:420px;
-    }
-    .cal div{
-      padding:6px;
-      text-align:center;
-      border-radius:6px;
-      font-size:12px;
-    }
-    .head{font-weight:700;}
-    .off{opacity:0.3;}
-    .busy{background:#c97b7b;color:white;}
-    .free{background:#a7c4a0;color:#5a4633;cursor:pointer;}
-  </style>
 </head>
+
 <body>
-  
-  <button onclick="window.location.href='main.html'" class="btn-retour">
-  ← Retour à l'acceuil
-</button>
 
-<h1>Disponibilités</h1>
+<!-- NAVBAR -->
+<style>
+  .nav {
+    background: #5A4633;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    border-bottom: 3px solid #D9C7A3;
+  }
+  .nav a {
+    color: #F4E9D8;
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+  .nav a:hover {
+    color: #A7C4A0;
+  }
+</style>
 
-<label>Bungalow :</label>
-<select id="bungalow-select">
-  <option value="bungalow1">Bungalow 1</option>
-  <option value="bungalow2">Bungalow 2</option>
-</select>
+<div class="nav">
+  <a href="main.html">Accueil</a>
+  <a href="dispo.html">Disponibilités</a>
+  <a href="resa.html">Réserver</a>
+  <a href="nos-bungalows.html">Nos bungalows</a>
+  <a href="contact.html">Contact</a>
+</div>
 
-<br><br>
+<style>
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #F4E9D8;
+    color: #3A2F25;
+    padding: 2rem;
+  }
+  .box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #5A4633;
+    max-width: 500px;
+    margin: auto;
+  }
+  input, select {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid #b9a58a;
+  }
+  .btn {
+    background: #A7C4A0;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+  }
+  .btn:hover {
+    background: #8fb48a;
+  }
+  .result {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    text-align: center;
+  }
+</style>
 
-<label>Mois :</label>
-<select id="mois-select">
-  <option value="0">Janvier</option>
-  <option value="1">Février</option>
-  <option value="2">Mars</option>
-  <option value="3">Avril</option>
-  <option value="4">Mai</option>
-  <option value="5">Juin</option>
-  <option value="6">Juillet</option>
-  <option value="7">Août</option>
-  <option value="8">Septembre</option>
-  <option value="9">Octobre</option>
-  <option value="10">Novembre</option>
-  <option value="11">Décembre</option>
-</select>
+<div class="box">
+  <h2>Vérifier les disponibilités</h2>
 
-<label>Année :</label>
-<select id="annee-select"></select>
+  <label>Bungalow :</label>
+  <select id="bungalow">
+    <option value="1">Bungalow 1</option>
+    <option value="2">Bungalow 2</option>
+    <option value="3">Bungalow 3</option>
+  </select>
 
-<div id="calendar" class="cal"></div>
-<div id="liste"></div>
+  <label>Date d’arrivée :</label>
+  <input type="date" id="dateArrivee">
+
+  <label>Date de départ :</label>
+  <input type="date" id="dateDepart">
+
+  <button class="btn" onclick="check()">Vérifier</button>
+
+  <div id="result" class="result"></div>
+</div>
 
 <script>
-const anneeSelect = document.getElementById("annee-select");
-const moisSelect = document.getElementById("mois-select");
-const bungalowSelect = document.getElementById("bungalow-select");
-const currentYear = new Date().getFullYear();
+const BASE_URL = "https://h-e5oa.onrender.com";
 
-// Remplir années
-for (let y = currentYear; y <= currentYear + 5; y++) {
-  const opt = document.createElement("option");
-  opt.value = y;
-  opt.textContent = y;
-  anneeSelect.appendChild(opt);
-}
+async function check() {
+  const bungalow = document.getElementById("bungalow").value;
+  const dateA = document.getElementById("dateArrivee").value;
+  const dateD = document.getElementById("dateDepart").value;
 
-moisSelect.value = new Date().getMonth();
-anneeSelect.value = currentYear;
-
-// Lecture ICS
-async function lireICS(url) {
-  const res = await fetch(url);
-  if (!res.ok) return [];
-  const text = await res.text();
-
-  const lignes = text.split("\n");
-  const dates = [];
-
-  for (const l of lignes) {
-    if (l.startsWith("DTSTART")) {
-      const raw = l.split(":")[1].trim();
-      const iso = raw.substring(0, 8);
-      const y = iso.substring(0, 4);
-      const m = iso.substring(4, 6);
-      const d = iso.substring(6, 8);
-      dates.push(`${y}-${m}-${d}`);
-    }
+  if (!dateA || !dateD) {
+    document.getElementById("result").innerHTML = "Veuillez choisir les dates.";
+    return;
   }
 
-  return dates;
-}
+  const res = await fetch(`${BASE_URL}/api/reservations`);
+  const data = await res.json();
 
-async function loadCalendar() {
-  const bungalow = bungalowSelect.value;
+  const overlap = data.some(r =>
+    r.bungalow == bungalow &&
+    !(dateD <= r.dateArrivee || dateA >= r.dateDepart)
+  );
 
-  const urlICS = `https://h-e5oa.onrender.com/icals/${bungalow}.ics`;
-
-  const dates = await lireICS(urlICS);
-  const busy = new Set(dates);
-
-  const month = parseInt(moisSelect.value);
-  const year = parseInt(anneeSelect.value);
-
-  const first = new Date(year, month, 1);
-  const last = new Date(year, month + 1, 0);
-
-  const cal = document.getElementById("calendar");
-  cal.innerHTML = "";
-
-  ["L","M","M","J","V","S","D"].forEach(j => {
-    const h = document.createElement("div");
-    h.textContent = j;
-    h.className = "head";
-    cal.appendChild(h);
-  });
-
-  let start = (first.getDay() + 6) % 7;
-  for (let i = 0; i < start; i++) {
-    const cell = document.createElement("div");
-    cell.className = "off";
-    cal.appendChild(cell);
-  }
-
-  for (let d = 1; d <= last.getDate(); d++) {
-    const date = new Date(year, month, d);
-    const iso = date.toISOString().split("T")[0];
-    const cell = document.createElement("div");
-    cell.textContent = d;
-
-    if (busy.has(iso)) {
-      cell.className = "busy";
-    } else {
-      cell.className = "free";
-      cell.onclick = () => {
-        window.location.href = `reservation.html?bungalow=${bungalow}&date=${iso}`;
-      };
-    }
-    cal.appendChild(cell);
+  if (overlap) {
+    document.getElementById("result").innerHTML = "❌ Ce bungalow est occupé.";
+  } else {
+    document.getElementById("result").innerHTML = `
+      ✅ Disponible !<br><br>
+      <a class="btn" href="main.html?bungalow=${bungalow}&dateA=${dateA}&dateD=${dateD}">
+        Réserver maintenant
+      </a>
+    `;
   }
 }
-
-bungalowSelect.addEventListener("change", loadCalendar);
-moisSelect.addEventListener("change", loadCalendar);
-anneeSelect.addEventListener("change", loadCalendar);
-
-loadCalendar();
 </script>
 
 </body>
