@@ -32,9 +32,9 @@
 <div class="nav">
   <a href="main.html">Accueil</a>
   <a href="dispo.html">Disponibilités</a>
-  <a href="reservation.html">Réserver</a>
-  <a href="main.html">Nos bungalows</a>
-  <a href="main.html">Contact</a>
+  <a href="resa.html">Réserver</a>
+  <a href="nos-bungalows.html">Nos bungalows</a>
+  <a href="contact.html">Contact</a>
 </div>
 
 <style>
@@ -82,9 +82,10 @@
   <h2>Réserver un bungalow</h2>
 
   <label>Bungalow :</label>
-  <select id="bungalow">
+  <select id="bungalow" onchange="updatePrice()">
     <option value="1">Bungalow 1</option>
     <option value="2">Bungalow 2</option>
+    <option value="3">Bungalow 3</option>
   </select>
 
   <label>Nom :</label>
@@ -94,13 +95,13 @@
   <input type="email" id="email">
 
   <label>Date d’arrivée :</label>
-  <input type="date" id="dateArrivee">
+  <input type="date" id="dateArrivee" onchange="updatePrice()">
 
   <label>Date de départ :</label>
-  <input type="date" id="dateDepart">
+  <input type="date" id="dateDepart" onchange="updatePrice()">
 
-  <label>Prix (€) :</label>
-  <input type="number" id="price">
+  <label>Prix total (€) :</label>
+  <input type="number" id="price" readonly>
 
   <button class="btn" onclick="pay()">Payer et réserver</button>
 
@@ -110,6 +111,48 @@
 <script>
 const BASE_URL = "https://h-e5oa.onrender.com";
 
+// 🔥 TARIFS
+// 130 € du dimanche au jeudi
+// 150 € vendredi et samedi
+function getNightPrice(date) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = dimanche, 6 = samedi
+
+  if (day === 5 || day === 6) {
+    return 150; // vendredi (5) et samedi (6)
+  }
+  return 130; // dimanche à jeudi
+}
+
+// 🔥 Calcul automatique du prix total
+function updatePrice() {
+  const dateA = document.getElementById("dateArrivee").value;
+  const dateD = document.getElementById("dateDepart").value;
+
+  if (!dateA || !dateD) return;
+
+  const d1 = new Date(dateA);
+  const d2 = new Date(dateD);
+
+  const nights = (d2 - d1) / (1000 * 60 * 60 * 24);
+
+  if (nights <= 0) {
+    document.getElementById("price").value = "";
+    return;
+  }
+
+  let total = 0;
+  let current = new Date(dateA);
+
+  for (let i = 0; i < nights; i++) {
+    total += getNightPrice(current);
+    current.setDate(current.getDate() + 1);
+  }
+
+  document.getElementById("price").value = total;
+}
+
+// 🔥 Paiement Stripe
 async function pay() {
   const bungalow = document.getElementById("bungalow").value;
   const name = document.getElementById("name").value;
