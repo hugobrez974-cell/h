@@ -222,7 +222,7 @@ function generateInvoice(res, reservation, invoiceId) {
 
   doc.fontSize(12).text("Merci pour votre confiance !");
   doc.text("À très bientôt aux Tonneaux des Ô.");
-  doc.text("Nous contacter au +262 693 63 66 81 ou par nos reseaux sociaux
+  doc.text("Nous contacter au +262 693 63 66 81 ou par nos reseaux sociaux")
 
   doc.end();
 }
