@@ -50,9 +50,9 @@ app.post("/api/create-checkout-session", async (req, res) => {
         },
       ],
       success_url:
-        "https://les-tonneaux-des-o.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
+        "https://h-1-y7xu.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
       cancel_url:
-        "https://les-tonneaux-des-o.onrender.com/cancel.html?session_id={CHECKOUT_SESSION_ID}",
+        "https://h-1-y7xu.onrender.com/cancel.html?session_id={CHECKOUT_SESSION_ID}",
     });
 
     const reservations = loadReservations();
