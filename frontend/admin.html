@@ -182,7 +182,7 @@ const BASE_URL = "https://h-e5oa.onrender.com";
 // 🔥 TARIFS : 130€ dim-jeu, 150€ ven-sam
 function getNightPrice(date) {
   const d = new Date(date);
-  const day = d.getDay(); // 0 = dimanche, 6 = samedi
+  const day = d.getDay();
   if (day === 5 || day === 6) return 150;
   return 130;
 }
@@ -259,7 +259,6 @@ async function createReservation() {
     return;
   }
 
-  // Vérifier si déjà occupé
   const res = await fetch(`${BASE_URL}/api/reservations`);
   const data = await res.json();
 
@@ -338,13 +337,25 @@ async function sendPaymentLink(index) {
     return;
   }
 
+  const invoiceUrl = `${BASE_URL}/api/admin/invoice/${index}`;
+
   const message = `Bonjour ${r.name},
 
-Voici votre lien de paiement pour votre réservation aux Tonneaux des Ô (Bungalow ${r.bungalow}, du ${r.dateArrivee} au ${r.dateDepart}) :
+Voici votre lien de paiement pour votre réservation aux Tonneaux des Ô :
 
-${r.paymentLink}
+➡ Paiement sécurisé : ${r.paymentLink}
 
-À très bientôt à Bois Court.`;
+📄 Facture : NON PAYÉE
+Télécharger la facture PDF : ${invoiceUrl}
+
+Détails de votre réservation :
+- Bungalow : ${r.bungalow}
+- Arrivée : ${r.dateArrivee}
+- Départ : ${r.dateDepart}
+- Montant : ${r.price} €
+
+Nous restons disponibles pour toute question.
+À très bientôt au Tonneaux des Ô.`;
 
   const url = `mailto:${r.email}?subject=Votre réservation aux Tonneaux des Ô&body=${encodeURIComponent(message)}`;
   window.location.href = url;
