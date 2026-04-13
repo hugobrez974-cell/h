@@ -8,38 +8,121 @@
 
 <body>
 
-<!-- NAVBAR -->
-<style>
-  .nav {
-    background: #5A4633;
-    padding: 15px;
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-    border-bottom: 3px solid #D9C7A3;
-  }
-  .nav a {
-    color: #F4E9D8;
-    font-weight: 700;
-    text-decoration: none;
-    font-size: 1.1rem;
-  }
-  .nav a:hover {
-    color: #A7C4A0;
-  }
-</style>
+<header>
+  <div class="logo">Les tonneaux des Ô</div>
 
-<div class="nav">
-  <a href="main.html">Accueil</a>
-  <a href="dispo.html">Disponibilités</a>
-  <a href="reservation.html">Réserver</a>
-  <a href="main.html">Nos bungalows</a>
-  <a href="main.html">Contact</a>
-  <a href="admin.html">Admin</a>
+  <div class="burger" onclick="toggleMenu()">☰</div>
+
+  <nav>
+    <a href="/main.html">Accueil</a>
+    <a href="/dispo.html">Disponibilités</a>
+    <a href="/reservation.html">Réserver</a>
+    <a href="/main.html">Bungalows</a>
+    <a href="/main.html">Contact</a>
+  </nav>
+</header>
+
+<div id="mobileMenu">
+  <a href="/main.html" onclick="toggleMenu()">Accueil</a>
+  <a href="/dispo.html" onclick="toggleMenu()">Disponibilités</a>
+  <a href="/reservation.html" onclick="toggleMenu()">Réserver</a>
+  <a href="/main.html" onclick="toggleMenu()">Bungalows</a>
+  <a href="/main.html" onclick="toggleMenu()">Contact</a>
+  <a href="#" onclick="toggleMenu()">Fermer</a>
 </div>
 
+<script>
+  function toggleMenu() {
+    document.getElementById("mobileMenu").classList.toggle("open");
+  }
+</script>
 
 <style>
+  :root {
+    --bois: #5A4633;
+    --sable: #F4E9D8;
+    --vert: #A7C4A0;
+    --blanc: #d6c7a0;
+    --or: #D9B77A;
+    --texte: #3A2F25;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(10px);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e5d8c8;
+    z-index: 10000;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--bois);
+    letter-spacing: 0.05em;
+  }
+
+  nav {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  nav a {
+    text-decoration: none;
+    color: var(--bois);
+    font-weight: 600;
+  }
+
+  nav a:hover { color: var(--vert); }
+
+  .burger {
+    display: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--bois);
+  }
+
+  #mobileMenu {
+    position: fixed;
+    top: 0;
+    right: -260px;
+    width: 260px;
+    height: 100%;
+    background: var(--bois);
+    color: var(--sable);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    transition: right 0.35s ease;
+    z-index: 99999;
+  }
+
+  #mobileMenu.open {
+    right: 0;
+  }
+
+  #mobileMenu a {
+    color: var(--sable);
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  #mobileMenu a:hover {
+    color: var(--vert);
+  }
+
+  @media (max-width: 800px) {
+    nav { display: none; }
+    .burger { display: block; }
+  }
+
   body {
     font-family: 'Nunito', sans-serif;
     background: #F4E9D8;
