@@ -160,7 +160,7 @@ app.post("/api/admin/create", (req, res) => {
     dateArrivee,
     dateDepart,
     price,
-    status: "pending", // 🔒 dates bloquées, en attente de paiement
+    status: "non payer", // 🔒 dates bloquées, en attente de paiement
     createdAt: new Date().toISOString(),
   };
 
@@ -269,11 +269,28 @@ function generateInvoice(res, reservation, invoiceId) {
   doc.text(`Montant : ${reservation.price} €`);
   doc.moveDown(2);
 
-  doc.fontSize(12).text("Merci pour votre confiance !");
-  doc.text("À très bientôt aux Tonneaux des Ô.");
-  doc.text("Nous contacter au +262 693 63 66 81 ou par nos réseaux sociaux");
+doc.fontSize(12).text("Merci pour votre confiance !");
+doc.text("À très bientôt aux Tonneaux des Ô.");
+doc.text("Nous contacter au +262 693 63 66 81 ou par nos réseaux sociaux");
+doc.moveDown(1);
 
-  doc.end();
+// 🔥 Ajout du site et du lien Google Maps
+doc.fontSize(12).fillColor("blue").text(
+  "Site web : https://h-1-y7xu.onrender.com/",
+  { link: "https://h-1-y7xu.onrender.com/", underline: true }
+);
+
+doc.moveDown(0.5);
+
+doc.fontSize(12).fillColor("blue").text(
+  "Voir sur Google Maps : Les Tonneaux des Ô, Bois Court, La Réunion",
+  {
+    link: "https://maps.app.goo.gl/mN6qmCc6vyYHPfSb7",
+    underline: true
+  }
+);
+
+doc.end();
 }
 
 // ---------------------------------------------------------
