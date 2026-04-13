@@ -22,7 +22,7 @@
       padding: 2rem;
     }
 
-    /* MENU MODERNE */
+    /* MENU MODERNE RESPONSIVE */
     header {
       position: sticky;
       top: 0;
@@ -40,21 +40,22 @@
       font-family: 'Playfair Display', serif;
       font-size: 1.4rem;
       color: var(--bois);
-      letter-spacing: 0.05em;
     }
 
-    nav {
+    nav.desktop-menu {
       display: flex;
       gap: 1.5rem;
     }
 
-    nav a {
+    nav.desktop-menu a {
       text-decoration: none;
       color: var(--bois);
       font-weight: 600;
     }
 
-    nav a:hover { color: var(--vert); }
+    nav.desktop-menu a:hover {
+      color: var(--vert);
+    }
 
     .burger {
       display: none;
@@ -94,12 +95,17 @@
       color: var(--vert);
     }
 
-    @media (max-width: 800px) {
-      nav { display: none; }
-      .burger { display: block; }
+    /* AUTO PC / MOBILE */
+    @media (max-width: 900px) {
+      nav.desktop-menu {
+        display: none;
+      }
+      .burger {
+        display: block;
+      }
     }
 
-    /* ADMIN TABLE + FORM */
+    /* ADMIN UI */
     h1, h2 {
       color: var(--bois);
       text-align: center;
@@ -172,7 +178,7 @@
 
   <div class="burger" onclick="toggleMenu()">☰</div>
 
-  <nav>
+  <nav class="desktop-menu">
     <a href="/main.html">Accueil</a>
     <a href="/dispo.html">Disponibilités</a>
     <a href="/reservation.html">Réserver</a>
