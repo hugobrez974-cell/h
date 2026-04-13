@@ -4,10 +4,169 @@
   <meta charset="UTF-8">
   <title>Admin – Les Tonneaux des Ô</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root {
+      --bois: #5A4633;
+      --sable: #F4E9D8;
+      --vert: #A7C4A0;
+      --blanc: #d6c7a0;
+      --or: #D9B77A;
+      --texte: #3A2F25;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--sable);
+      color: var(--texte);
+      padding: 2rem;
+    }
+
+    /* MENU MODERNE */
+    header {
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e5d8c8;
+      z-index: 10000;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: var(--bois);
+      letter-spacing: 0.05em;
+    }
+
+    nav {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: var(--bois);
+      font-weight: 600;
+    }
+
+    nav a:hover { color: var(--vert); }
+
+    .burger {
+      display: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: var(--bois);
+    }
+
+    #mobileMenu {
+      position: fixed;
+      top: 0;
+      right: -260px;
+      width: 260px;
+      height: 100%;
+      background: var(--bois);
+      color: var(--sable);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      transition: right 0.35s ease;
+      z-index: 99999;
+    }
+
+    #mobileMenu.open {
+      right: 0;
+    }
+
+    #mobileMenu a {
+      color: var(--sable);
+      text-decoration: none;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    #mobileMenu a:hover {
+      color: var(--vert);
+    }
+
+    @media (max-width: 800px) {
+      nav { display: none; }
+      .burger { display: block; }
+    }
+
+    /* ADMIN TABLE + FORM */
+    h1, h2 {
+      color: var(--bois);
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background: var(--bois);
+      color: white;
+    }
+
+    tr:hover {
+      background: #f1e7d6;
+    }
+
+    button {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin: 2px;
+    }
+
+    .delete { background: #d9534f; color: white; }
+    .invoice { background: #A7C4A0; color: #3A2F25; }
+    .paylink { background: #f0ad4e; color: #3A2F25; }
+    .send { background: #5bc0de; color: white; }
+
+    input, select {
+      padding: 6px 8px;
+      margin: 3px 0;
+      border-radius: 6px;
+      border: 1px solid #b9a58a;
+      width: 100%;
+      max-width: 260px;
+    }
+
+    .form-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      border: 1px solid #d2c1a5;
+      max-width: 700px;
+      margin: auto;
+    }
+  </style>
 </head>
 
 <body>
 
+<!-- MENU -->
 <header>
   <div class="logo">Les tonneaux des Ô</div>
 
@@ -17,8 +176,9 @@
     <a href="/main.html">Accueil</a>
     <a href="/dispo.html">Disponibilités</a>
     <a href="/reservation.html">Réserver</a>
-    <a href="/main.html">Bungalows</a>
-    <a href="/main.html">Contact</a>
+    <a href="/nos-bungalows.html">Bungalows</a>
+    <a href="/contact.html">Contact</a>
+    <a href="/admin.html">Admin</a>
   </nav>
 </header>
 
@@ -26,8 +186,9 @@
   <a href="/main.html" onclick="toggleMenu()">Accueil</a>
   <a href="/dispo.html" onclick="toggleMenu()">Disponibilités</a>
   <a href="/reservation.html" onclick="toggleMenu()">Réserver</a>
-  <a href="/main.html" onclick="toggleMenu()">Bungalows</a>
-  <a href="/main.html" onclick="toggleMenu()">Contact</a>
+  <a href="/nos-bungalows.html" onclick="toggleMenu()">Bungalows</a>
+  <a href="/contact.html" onclick="toggleMenu()">Contact</a>
+  <a href="/admin.html" onclick="toggleMenu()">Admin</a>
   <a href="#" onclick="toggleMenu()">Fermer</a>
 </div>
 
@@ -36,180 +197,6 @@
     document.getElementById("mobileMenu").classList.toggle("open");
   }
 </script>
-
-<style>
-  :root {
-    --bois: #5A4633;
-    --sable: #F4E9D8;
-    --vert: #A7C4A0;
-    --blanc: #d6c7a0;
-    --or: #D9B77A;
-    --texte: #3A2F25;
-  }
-
-  header {
-    position: sticky;
-    top: 0;
-    background: rgba(255,255,255,0.9);
-    backdrop-filter: blur(10px);
-    padding: 1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e5d8c8;
-    z-index: 10000;
-  }
-
-  .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.4rem;
-    color: var(--bois);
-    letter-spacing: 0.05em;
-  }
-
-  nav {
-    display: flex;
-    gap: 1.5rem;
-  }
-
-  nav a {
-    text-decoration: none;
-    color: var(--bois);
-    font-weight: 600;
-  }
-
-  nav a:hover { color: var(--vert); }
-
-  .burger {
-    display: none;
-    font-size: 28px;
-    cursor: pointer;
-    color: var(--bois);
-  }
-
-  #mobileMenu {
-    position: fixed;
-    top: 0;
-    right: -260px;
-    width: 260px;
-    height: 100%;
-    background: var(--bois);
-    color: var(--sable);
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    transition: right 0.35s ease;
-    z-index: 99999;
-  }
-
-  #mobileMenu.open {
-    right: 0;
-  }
-
-  #mobileMenu a {
-    color: var(--sable);
-    text-decoration: none;
-    font-size: 1.2rem;
-    font-weight: 600;
-  }
-
-  #mobileMenu a:hover {
-    color: var(--vert);
-  }
-
-  @media (max-width: 800px) {
-    nav { display: none; }
-    .burger { display: block; }
-  }
-
-  body {
-    font-family: 'Nunito', sans-serif;
-    background: #F4E9D8;
-    color: #3A2F25;
-    padding: 2rem;
-  }
-
-  h1, h2 {
-    color: #5A4633;
-  }
-
-  h1 {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-top: 20px;
-  }
-
-  th, td {
-    padding: 12px;
-    border-bottom: 1px solid #ddd;
-    text-align: center;
-  }
-
-  th {
-    background: #5A4633;
-    color: white;
-  }
-
-  tr:hover {
-    background: #f1e7d6;
-  }
-
-  button {
-    padding: 6px 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    margin: 2px;
-  }
-
-  .delete {
-    background: #d9534f;
-    color: white;
-  }
-
-  .invoice {
-    background: #A7C4A0;
-    color: #3A2F25;
-  }
-
-  .paylink {
-    background: #f0ad4e;
-    color: #3A2F25;
-  }
-
-  .send {
-    background: #5bc0de;
-    color: white;
-  }
-
-  input, select {
-    padding: 6px 8px;
-    margin: 3px 0;
-    border-radius: 6px;
-    border: 1px solid #b9a58a;
-    width: 100%;
-    max-width: 260px;
-  }
-
-  .form-container {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 30px;
-    border: 1px solid #d2c1a5;
-    max-width: 700px;
-  }
-</style>
 
 <h1>📋 Administration – Les Tonneaux des Ô</h1>
 
@@ -264,7 +251,7 @@
 <script>
 const BASE_URL = "https://h-e5oa.onrender.com";
 
-// 🔥 TARIFS : 130€ dim-jeu, 150€ ven-sam
+/* TARIFS */
 function getNightPrice(date) {
   const d = new Date(date);
   const day = d.getDay();
@@ -297,7 +284,7 @@ function updatePriceForm() {
 document.getElementById("dateArrivee").addEventListener("change", updatePriceForm);
 document.getElementById("dateDepart").addEventListener("change", updatePriceForm);
 
-// 🔥 Charger les réservations
+/* CHARGER RÉSERVATIONS */
 async function loadReservations() {
   const res = await fetch(`${BASE_URL}/api/reservations`);
   const data = await res.json();
@@ -330,7 +317,7 @@ async function loadReservations() {
   });
 }
 
-// 🔥 Créer une pré-réservation (bloque les dates)
+/* CRÉER RÉSERVATION */
 async function createReservation() {
   const bungalow = document.getElementById("bungalow").value;
   const name = document.getElementById("name").value;
@@ -366,19 +353,14 @@ async function createReservation() {
   const json = await res2.json();
 
   if (json.success) {
-    alert("Pré-réservation créée (dates bloquées).");
-    document.getElementById("name").value = "";
-    document.getElementById("email").value = "";
-    document.getElementById("dateArrivee").value = "";
-    document.getElementById("dateDepart").value = "";
-    document.getElementById("price").value = "";
+    alert("Pré-réservation créée.");
     loadReservations();
   } else {
     alert("Erreur : " + json.error);
   }
 }
 
-// 🔥 Générer un lien de paiement Stripe pour une résa
+/* LIEN DE PAIEMENT */
 async function createPaymentLink(index) {
   const res = await fetch(`${BASE_URL}/api/reservations`);
   const data = await res.json();
@@ -392,33 +374,28 @@ async function createPaymentLink(index) {
   const response = await fetch(`${BASE_URL}/api/admin/create-payment-link`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      ...r,
-      index
-    })
+    body: JSON.stringify({ ...r, index })
   });
 
   const json = await response.json();
 
   if (json.success) {
     alert("Lien généré et copié : " + json.url);
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(json.url);
-    }
+    navigator.clipboard.writeText(json.url);
     loadReservations();
   } else {
     alert("Erreur : " + json.error);
   }
 }
 
-// 🔥 Envoyer le lien de paiement au client (mailto)
+/* ENVOYER MAIL */
 async function sendPaymentLink(index) {
   const res = await fetch(`${BASE_URL}/api/reservations`);
   const data = await res.json();
   const r = data[index];
 
   if (!r || !r.paymentLink) {
-    alert("Aucun lien de paiement pour cette réservation.");
+    alert("Aucun lien de paiement.");
     return;
   }
 
@@ -428,30 +405,31 @@ async function sendPaymentLink(index) {
 
 Voici votre lien de paiement pour votre réservation aux Tonneaux des Ô :
 
-➡ Paiement sécurisé : ${r.paymentLink}
+➡ Paiement sécurisé :
+${r.paymentLink}
 
 📄 Facture : NON PAYÉE
-Télécharger la facture PDF : ${invoiceUrl}
+Télécharger la facture PDF :
+${invoiceUrl}
 
-Détails de votre réservation :
+Détails :
 - Bungalow : ${r.bungalow}
 - Arrivée : ${r.dateArrivee}
 - Départ : ${r.dateDepart}
 - Montant : ${r.price} €
 
-Nous restons disponibles pour toute question.
-À très bientôt au Tonneaux des Ô.`;
+À très bientôt à Bois Court.`;
 
   const url = `mailto:${r.email}?subject=Votre réservation aux Tonneaux des Ô&body=${encodeURIComponent(message)}`;
   window.location.href = url;
 }
 
-// 🔥 Télécharger une facture PDF admin
+/* FACTURE */
 function downloadInvoice(id) {
   window.location.href = `${BASE_URL}/api/admin/invoice/${id}`;
 }
 
-// 🔥 Supprimer une réservation
+/* SUPPRIMER */
 async function deleteReservation(id) {
   if (!confirm("Supprimer cette réservation ?")) return;
 
