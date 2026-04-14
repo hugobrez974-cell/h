@@ -179,7 +179,6 @@
   <select id="bungalow">
     <option value="1">Bungalow 1</option>
     <option value="2">Bungalow 2</option>
-    <option value="3">Bungalow 3</option>
   </select>
 
   <label>Date d’arrivée :</label>
@@ -192,17 +191,41 @@
 </div>
 
 <script>
-function check() {
-  const b = document.getElementById("bungalow").value;
-  const a = document.getElementById("dateA").value;
-  const d = document.getElementById("dateD").value;
+const BASE_URL = "https://h-e5oa.onrender.com";
 
-  if (!a || !d) {
-    alert("Veuillez choisir les dates.");
+async function check() {
+  const bungalow = document.getElementById("bungalow").value;
+  const dateA = document.getElementById("dateA").value;
+  const dateD = document.getElementById("dateD").value;
+
+  // Vérif 1 : dates remplies
+  if (!dateA || !dateD) {
+    alert("Veuillez choisir les deux dates.");
     return;
   }
 
-  window.location.href = `/reservation.html?bungalow=${b}&dateA=${a}&dateD=${d}`;
+  // Vérif 2 : ordre des dates
+  if (new Date(dateA) >= new Date(dateD)) {
+    alert("La date de départ doit être après la date d’arrivée.");
+    return;
+  }
+
+  // Vérif 3 : disponibilité via API
+  const res = await fetch(`${BASE_URL}/api/reservations`);
+  const data = await res.json();
+
+  const overlap = data.some(r =>
+    r.bungalow == bungalow &&
+    !(dateD <= r.dateArrivee || dateA >= r.dateDepart)
+  );
+
+  if (overlap) {
+    alert("❌ Ce bungalow est déjà réservé sur ces dates.");
+    return;
+  }
+
+  // OK → redirection
+  window.location.href = `/reservation.html?bungalow=${bungalow}&dateA=${dateA}&dateD=${dateD}`;
 }
 </script>
 
