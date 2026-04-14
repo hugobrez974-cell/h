@@ -167,16 +167,6 @@
 </div>
 
 <script>
-    const mp3Files = [
-        "/Claudio Capéo - Un homme debout (clip officiel).mp3",
-        "/Bruno Mars - 24K Magic (Official Music Video).mp3",
-        "/SARAH SHATTA.mp3",
-        "/Hugo TSR - Là-Haut (clip officiel).mp3",
-        "/Hugo TSR - Les vieux de mon âge.mp3",
-        "/Nèg' Marrons - Le bilan (Clip officiel).mp3",
-        "/Fresh Prince (feat. Uncle Phil).mp3"
-    ];
-
     const container = document.getElementById("liste");
     const playlist = document.getElementById("playlist");
     const audio = document.getElementById("audioPlayer");
@@ -198,27 +188,32 @@
         document.getElementById("track-" + btoa(file)).classList.add("active");
     }
 
-    // Affichage des cartes
-    mp3Files.forEach(file => {
-        const name = file.replace("/", "");
+    // Charger automatiquement mp3.json
+    fetch("mp3.json")
+        .then(r => r.json())
+        .then(mp3Files => {
+            mp3Files.forEach(file => {
+                const name = file.replace("/", "");
 
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `
-            <div class="cover">🎧</div>
-            <div class="title">${name}</div>
-        `;
-        div.onclick = () => playTrack(file);
-        container.appendChild(div);
+                // Cartes
+                const div = document.createElement("div");
+                div.className = "card";
+                div.innerHTML = `
+                    <div class="cover">🎧</div>
+                    <div class="title">${name}</div>
+                `;
+                div.onclick = () => playTrack(file);
+                container.appendChild(div);
 
-        // Playlist à droite
-        const item = document.createElement("div");
-        item.className = "track-item";
-        item.id = "track-" + btoa(file);
-        item.textContent = name;
-        item.onclick = () => playTrack(file);
-        playlist.appendChild(item);
-    });
+                // Playlist
+                const item = document.createElement("div");
+                item.className = "track-item";
+                item.id = "track-" + btoa(file);
+                item.textContent = name;
+                item.onclick = () => playTrack(file);
+                playlist.appendChild(item);
+            });
+        });
 
     // Play/Pause
     playBtn.onclick = () => {
