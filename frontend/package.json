@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "build": "node frontend/generate-mp3.js"
+  }
+}
