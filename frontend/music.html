@@ -7,10 +7,16 @@
     <style>
         body {
             margin: 0;
-            padding: 20px;
             background: #121212;
             font-family: Arial, sans-serif;
             color: white;
+            display: flex;
+        }
+
+        /* --- COLONNE GAUCHE : ALBUMS --- */
+        .content {
+            flex: 1;
+            padding: 20px;
         }
 
         h1 {
@@ -56,6 +62,39 @@
             font-weight: bold;
             height: 40px;
             overflow: hidden;
+        }
+
+        /* --- COLONNE DROITE : PLAYLIST --- */
+        .playlist {
+            width: 300px;
+            background: #181818;
+            border-left: 1px solid #333;
+            padding: 20px;
+            overflow-y: auto;
+            height: calc(100vh - 90px);
+        }
+
+        .playlist h2 {
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        .track-item {
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            transition: 0.2s;
+        }
+
+        .track-item:hover {
+            background: #282828;
+        }
+
+        .track-item.active {
+            background: #1DB954;
+            color: black;
+            font-weight: bold;
         }
 
         /* --- BARRE SPOTIFY --- */
@@ -105,9 +144,15 @@
 </head>
 <body>
 
-<h1>🎵 Playlist Spotify</h1>
+<div class="content">
+    <h1>🎵 Playlist Spotify</h1>
+    <div class="grid" id="liste"></div>
+</div>
 
-<div class="grid" id="liste"></div>
+<!-- PLAYLIST À DROITE -->
+<div class="playlist" id="playlist">
+    <h2>Titres</h2>
+</div>
 
 <!-- BARRE DE LECTURE -->
 <div class="player-bar">
@@ -128,10 +173,12 @@
         "/SARAH SHATTA.mp3",
         "/Hugo TSR - Là-Haut (clip officiel).mp3",
         "/Hugo TSR - Les vieux de mon âge.mp3",
-        "/Nèg' Marrons - Le bilan (Clip officiel).mp3"
+        "/Nèg' Marrons - Le bilan (Clip officiel).mp3",
+        "/Fresh Prince (feat. Uncle Phil).mp3"
     ];
 
     const container = document.getElementById("liste");
+    const playlist = document.getElementById("playlist");
     const audio = document.getElementById("audioPlayer");
     const playBtn = document.getElementById("playBtn");
     const timeline = document.getElementById("timeline");
@@ -139,33 +186,43 @@
 
     let currentTrack = null;
 
+    function playTrack(file) {
+        const name = file.replace("/", "");
+        audio.src = file;
+        audio.play();
+        currentTrack = file;
+        currentTitle.textContent = name;
+        playBtn.textContent = "⏸";
+
+        document.querySelectorAll(".track-item").forEach(el => el.classList.remove("active"));
+        document.getElementById("track-" + btoa(file)).classList.add("active");
+    }
+
     // Affichage des cartes
     mp3Files.forEach(file => {
         const name = file.replace("/", "");
 
         const div = document.createElement("div");
         div.className = "card";
-
         div.innerHTML = `
             <div class="cover">🎧</div>
             <div class="title">${name}</div>
         `;
-
-        div.onclick = () => {
-            audio.src = file;
-            audio.play();
-            currentTrack = file;
-            currentTitle.textContent = name;
-            playBtn.textContent = "⏸";
-        };
-
+        div.onclick = () => playTrack(file);
         container.appendChild(div);
+
+        // Playlist à droite
+        const item = document.createElement("div");
+        item.className = "track-item";
+        item.id = "track-" + btoa(file);
+        item.textContent = name;
+        item.onclick = () => playTrack(file);
+        playlist.appendChild(item);
     });
 
-    // Bouton Play/Pause
+    // Play/Pause
     playBtn.onclick = () => {
         if (!currentTrack) return;
-
         if (audio.paused) {
             audio.play();
             playBtn.textContent = "⏸";
