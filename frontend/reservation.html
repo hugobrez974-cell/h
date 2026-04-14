@@ -152,8 +152,8 @@
     <a href="/main.html">Accueil</a>
     <a href="/dispo.html">Disponibilités</a>
     <a href="/reservation.html">Réserver</a>
-    <a href="/main.html">Bungalows</a>
-    <a href="/main.html">Contact</a>
+    <a href="/main.html#bungalows">Bungalows</a>
+    <a href="/main.html#contact">Contact</a>
   </nav>
 </header>
 
@@ -161,8 +161,8 @@
   <a href="/main.html" onclick="toggleMenu()">Accueil</a>
   <a href="/dispo.html" onclick="toggleMenu()">Disponibilités</a>
   <a href="/reservation.html" onclick="toggleMenu()">Réserver</a>
-  <a href="/main.html" onclick="toggleMenu()">Bungalows</a>
-  <a href="/main.html" onclick="toggleMenu()">Contact</a>
+  <a href="/main.html#bungalows" onclick="toggleMenu()">Bungalows</a>
+  <a href="/main.html#contact" onclick="toggleMenu()">Contact</a>
   <a href="#" onclick="toggleMenu()">Fermer</a>
 </div>
 
@@ -193,6 +193,19 @@
   <button onclick="reserve()">Réserver</button>
 </div>
 
+<!-- REMPLISSAGE AUTOMATIQUE -->
+<script>
+const params = new URLSearchParams(window.location.search);
+
+document.getElementById("bungalow").innerHTML = `
+  <option value="${params.get("bungalow")}">Bungalow ${params.get("bungalow")}</option>
+`;
+
+document.getElementById("dateA").value = params.get("dateA");
+document.getElementById("dateD").value = params.get("dateD");
+</script>
+
+<!-- REDIRECTION DIRECTE VERS LE PAIEMENT -->
 <script>
 const BASE_URL = "https://h-e5oa.onrender.com";
 
@@ -209,7 +222,6 @@ async function reserve() {
     return;
   }
 
-  // Création du lien de paiement via ton API Render
   const res = await fetch(`${BASE_URL}/api/admin/create-payment-link`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -219,7 +231,6 @@ async function reserve() {
   const json = await res.json();
 
   if (json.success && json.url) {
-    // Redirection directe vers Stripe
     window.location.href = json.url;
   } else {
     alert("Erreur lors de la création du lien de paiement.");
