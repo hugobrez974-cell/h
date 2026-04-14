@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "cd backend && npm install && node server.js"
+    "start": "cd backend && npm install && node server.js",
+    "build": "node frontend/generate-mp3.js"
   }
 }
