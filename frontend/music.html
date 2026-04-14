@@ -111,6 +111,24 @@
             border-top: 1px solid #333;
         }
 
+        .control-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .control-btn:hover {
+            background: #444;
+            transform: scale(1.1);
+        }
+
         .play-btn {
             width: 55px;
             height: 55px;
@@ -156,7 +174,9 @@
 
 <!-- BARRE DE LECTURE -->
 <div class="player-bar">
+    <div class="control-btn" id="prevBtn">⏮</div>
     <div class="play-btn" id="playBtn">▶</div>
+    <div class="control-btn" id="nextBtn">⏭</div>
 
     <div class="track-info">
         <div class="track-title" id="currentTitle">Aucune musique</div>
@@ -170,17 +190,25 @@
     const container = document.getElementById("liste");
     const playlist = document.getElementById("playlist");
     const audio = document.getElementById("audioPlayer");
+
     const playBtn = document.getElementById("playBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
     const timeline = document.getElementById("timeline");
     const currentTitle = document.getElementById("currentTitle");
 
-    let currentTrack = null;
+    let mp3Files = [];
+    let currentIndex = -1;
 
-    function playTrack(file) {
+    function playTrack(index) {
+        currentIndex = index;
+        const file = mp3Files[index];
         const name = file.replace("/", "");
+
         audio.src = file;
         audio.play();
-        currentTrack = file;
+
         currentTitle.textContent = name;
         playBtn.textContent = "⏸";
 
@@ -188,11 +216,25 @@
         document.getElementById("track-" + btoa(file)).classList.add("active");
     }
 
+    function playNext() {
+        if (currentIndex < mp3Files.length - 1) {
+            playTrack(currentIndex + 1);
+        }
+    }
+
+    function playPrev() {
+        if (currentIndex > 0) {
+            playTrack(currentIndex - 1);
+        }
+    }
+
     // Charger automatiquement mp3.json
     fetch("mp3.json")
         .then(r => r.json())
-        .then(mp3Files => {
-            mp3Files.forEach(file => {
+        .then(files => {
+            mp3Files = files;
+
+            files.forEach((file, index) => {
                 const name = file.replace("/", "");
 
                 // Cartes
@@ -202,7 +244,7 @@
                     <div class="cover">🎧</div>
                     <div class="title">${name}</div>
                 `;
-                div.onclick = () => playTrack(file);
+                div.onclick = () => playTrack(index);
                 container.appendChild(div);
 
                 // Playlist
@@ -210,14 +252,13 @@
                 item.className = "track-item";
                 item.id = "track-" + btoa(file);
                 item.textContent = name;
-                item.onclick = () => playTrack(file);
+                item.onclick = () => playTrack(index);
                 playlist.appendChild(item);
             });
         });
 
     // Play/Pause
     playBtn.onclick = () => {
-        if (!currentTrack) return;
         if (audio.paused) {
             audio.play();
             playBtn.textContent = "⏸";
@@ -227,6 +268,10 @@
         }
     };
 
+    // Suivant / Précédent
+    nextBtn.onclick = playNext;
+    prevBtn.onclick = playPrev;
+
     // Timeline
     audio.ontimeupdate = () => {
         timeline.value = (audio.currentTime / audio.duration) * 100;
@@ -235,6 +280,9 @@
     timeline.oninput = () => {
         audio.currentTime = (timeline.value / 100) * audio.duration;
     };
+
+    // Quand une musique se termine → passer à la suivante
+    audio.onended = playNext;
 </script>
 
 </body>
