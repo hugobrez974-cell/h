@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Lecteur MP3 automatique</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .track { margin-bottom: 20px; padding: 10px; background: white; border-radius: 8px; }
+        audio { width: 100%; }
+    </style>
+</head>
+<body>
+
+<h1>Liste des MP3 du dossier</h1>
+<div id="liste"></div>
+
+<script>
+    // Mets ici les noms exacts de tes fichiers MP3
+    const mp3Files = [
+        "/private/Claudio Capéo - Un homme debout (clip officiel).mp3",
+        "/private/Bruno Mars - 24K Magic (Official Music Video).mp3",
+        "/private/SARAH SHATTA.mp3",
+        "/private/Hugo TSR - Là-Haut (clip officiel).mp3",
+        "/private/Hugo TSR - Les vieux de mon âge.mp3"
+    ];
+
+    const container = document.getElementById("liste");
+
+    mp3Files.forEach(file => {
+        const div = document.createElement("div");
+        div.className = "track";
+        div.innerHTML = `
+            <strong>${file}</strong><br>
+            <audio controls src="${file}"></audio>
+        `;
+        container.appendChild(div);
+    });
+</script>
+
+</body>
+</html>
