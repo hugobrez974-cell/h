@@ -152,8 +152,8 @@
     <a href="/main.html">Accueil</a>
     <a href="/dispo.html">Disponibilités</a>
     <a href="/reservation.html">Réserver</a>
-    <a href="/main.html#bungalows">Bungalows</a>
-    <a href="/main.html#contact">Contact</a>
+    <a href="/main.html">Bungalows</a>
+    <a href="/main.html">Contact</a>
   </nav>
 </header>
 
@@ -161,8 +161,8 @@
   <a href="/main.html" onclick="toggleMenu()">Accueil</a>
   <a href="/dispo.html" onclick="toggleMenu()">Disponibilités</a>
   <a href="/reservation.html" onclick="toggleMenu()">Réserver</a>
-  <a href="/main.html#bungalows" onclick="toggleMenu()">Bungalows</a>
-  <a href="/main.html#contact" onclick="toggleMenu()">Contact</a>
+  <a href="/main.html" onclick="toggleMenu()">Bungalows</a>
+  <a href="/main.html" onclick="toggleMenu()">Contact</a>
   <a href="#" onclick="toggleMenu()">Fermer</a>
 </div>
 
@@ -205,6 +205,27 @@ document.getElementById("dateA").value = params.get("dateA");
 document.getElementById("dateD").value = params.get("dateD");
 </script>
 
+<!-- CALCUL DU PRIX -->
+<script>
+function calculerPrix(dateA, dateD) {
+  const debut = new Date(dateA);
+  const fin = new Date(dateD);
+  let total = 0;
+
+  for (let d = new Date(debut); d < fin; d.setDate(d.getDate() + 1)) {
+    const jour = d.getDay(); // 0=dimanche, 5=vendredi, 6=samedi
+
+    if (jour === 5 || jour === 6) {
+      total += 150; // vendredi & samedi
+    } else {
+      total += 130; // semaine
+    }
+  }
+
+  return total;
+}
+</script>
+
 <!-- REDIRECTION DIRECTE VERS LE PAIEMENT -->
 <script>
 const BASE_URL = "https://h-e5oa.onrender.com";
@@ -222,10 +243,8 @@ async function reserve() {
     return;
   }
 
-  // Calcul du prix total
   const prix = calculerPrix(dateA, dateD);
 
-  // Création du lien de paiement via ton API Render
   const res = await fetch(`${BASE_URL}/api/admin/create-payment-link`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
