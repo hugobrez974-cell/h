@@ -222,10 +222,21 @@ async function reserve() {
     return;
   }
 
+  // Calcul du prix total
+  const prix = calculerPrix(dateA, dateD);
+
+  // Création du lien de paiement via ton API Render
   const res = await fetch(`${BASE_URL}/api/admin/create-payment-link`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ bungalow, name, email, dateArrivee: dateA, dateDepart: dateD })
+    body: JSON.stringify({
+      bungalow,
+      name,
+      email,
+      dateArrivee: dateA,
+      dateDepart: dateD,
+      prix
+    })
   });
 
   const json = await res.json();
