@@ -193,8 +193,8 @@
   <button onclick="reserve()">Réserver</button>
 </div>
 
-<!-- REMPLISSAGE AUTOMATIQUE -->
 <script>
+// Remplissage automatique
 const params = new URLSearchParams(window.location.search);
 
 document.getElementById("bungalow").innerHTML = `
@@ -205,8 +205,8 @@ document.getElementById("dateA").value = params.get("dateA");
 document.getElementById("dateD").value = params.get("dateD");
 </script>
 
-<!-- CALCUL DU PRIX -->
 <script>
+// Calcul du prix
 function calculerPrix(dateA, dateD) {
   const debut = new Date(dateA);
   const fin = new Date(dateD);
@@ -214,19 +214,13 @@ function calculerPrix(dateA, dateD) {
 
   for (let d = new Date(debut); d < fin; d.setDate(d.getDate() + 1)) {
     const jour = d.getDay(); // 0=dimanche, 5=vendredi, 6=samedi
-
-    if (jour === 5 || jour === 6) {
-      total += 150; // vendredi & samedi
-    } else {
-      total += 130; // semaine
-    }
+    total += (jour === 5 || jour === 6) ? 150 : 130;
   }
 
   return total;
 }
 </script>
 
-<!-- REDIRECTION DIRECTE VERS LE PAIEMENT -->
 <script>
 const BASE_URL = "https://h-e5oa.onrender.com";
 
@@ -243,7 +237,7 @@ async function reserve() {
     return;
   }
 
-  const prix = calculerPrix(dateA, dateD);
+  const price = calculerPrix(dateA, dateD);
 
   const res = await fetch(`${BASE_URL}/api/admin/create-payment-link`, {
     method: "POST",
