@@ -4,89 +4,185 @@
   <meta charset="UTF-8">
   <title>Réserver – Les Tonneaux des Ô</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root {
+      --bois: #5A4633;
+      --sable: #F4E9D8;
+      --vert: #A7C4A0;
+      --blanc: #d6c7a0;
+      --or: #D9B77A;
+      --texte: #3A2F25;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--sable);
+      color: var(--texte);
+      padding: 2rem;
+    }
+
+    /* MENU RESPONSIVE */
+    header {
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e5d8c8;
+      z-index: 10000;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: var(--bois);
+    }
+
+    nav.desktop-menu {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    nav.desktop-menu a {
+      text-decoration: none;
+      color: var(--bois);
+      font-weight: 600;
+    }
+
+    nav.desktop-menu a:hover {
+      color: var(--vert);
+    }
+
+    .burger {
+      display: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: var(--bois);
+    }
+
+    #mobileMenu {
+      position: fixed;
+      top: 0;
+      right: -500px;
+      width: 260px;
+      height: 100%;
+      background: var(--bois);
+      color: var(--sable);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      transition: right 0.35s ease;
+      z-index: 99999;
+    }
+
+    #mobileMenu.open {
+      right: 0;
+    }
+
+    #mobileMenu a {
+      color: var(--sable);
+      text-decoration: none;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    #mobileMenu a:hover {
+      color: var(--vert);
+    }
+
+    @media (max-width: 900px) {
+      nav.desktop-menu { display: none; }
+      .burger { display: block; }
+    }
+
+    /* FORMULAIRE */
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      border: 1px solid #d2c1a5;
+      margin-top: 2rem;
+    }
+
+    label {
+      font-weight: 600;
+      color: var(--bois);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #b9a58a;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: var(--vert);
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--bois);
+    }
+
+    button:hover {
+      background: #8fb88f;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- NAVBAR -->
-<style>
-  .nav {
-    background: #5A4633;
-    padding: 15px;
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-    border-bottom: 3px solid #D9C7A3;
-  }
-  .nav a {
-    color: #F4E9D8;
-    font-weight: 700;
-    text-decoration: none;
-    font-size: 1.1rem;
-  }
-  .nav a:hover {
-    color: #A7C4A0;
-  }
-</style>
+<header>
+  <div class="logo">Les tonneaux des Ô</div>
+  <div class="burger" onclick="toggleMenu()">☰</div>
 
-<div class="nav">
-  <a href="main.html">Accueil</a>
-  <a href="dispo.html">Disponibilités</a>
-  <a href="reservation.html">Réserver</a>
-  <a href="main.html">Nos bungalows</a>
-  <a href="main.html">Contact</a>
-  <a href="admin.html">Admin</a>
+  <nav class="desktop-menu">
+    <a href="/main.html">Accueil</a>
+    <a href="/dispo.html">Disponibilités</a>
+    <a href="/reservation.html">Réserver</a>
+    <a href="/main.html">Bungalows</a>
+    <a href="/main.html">Contact</a>
+  </nav>
+</header>
+
+<div id="mobileMenu">
+  <a href="/main.html" onclick="toggleMenu()">Accueil</a>
+  <a href="/dispo.html" onclick="toggleMenu()">Disponibilités</a>
+  <a href="/reservation.html" onclick="toggleMenu()">Réserver</a>
+  <a href="/main.html" onclick="toggleMenu()">Bungalows</a>
+  <a href="/main.html" onclick="toggleMenu()">Contact</a>
+  <a href="#" onclick="toggleMenu()">Fermer</a>
 </div>
 
-<style>
-  body {
-    font-family: 'Nunito', sans-serif;
-    background: #F4E9D8;
-    color: #3A2F25;
-    padding: 2rem;
+<script>
+  function toggleMenu() {
+    document.getElementById("mobileMenu").classList.toggle("open");
   }
-  .box {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    border: 2px solid #5A4633;
-    max-width: 500px;
-    margin: auto;
-  }
-  input, select {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border-radius: 8px;
-    border: 1px solid #b9a58a;
-  }
-  .btn {
-    background: #A7C4A0;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    font-weight: 700;
-    cursor: pointer;
-    width: 100%;
-  }
-  .btn:hover {
-    background: #8fb48a;
-  }
-  .result {
-    margin-top: 20px;
-    font-size: 1.2rem;
-    text-align: center;
-  }
-</style>
+</script>
 
-<div class="box">
-  <h2>Réserver un bungalow</h2>
+<h1 style="text-align:center;color:var(--bois);margin-top:2rem;">Réserver votre séjour</h1>
 
+<div class="container">
   <label>Bungalow :</label>
-  <select id="bungalow" onchange="updatePrice()">
-    <option value="1">Bungalow 1</option>
-    <option value="2">Bungalow 2</option>
-  </select>
+  <select id="bungalow"></select>
+
+  <label>Date d’arrivée :</label>
+  <input type="date" id="dateA">
+
+  <label>Date de départ :</label>
+  <input type="date" id="dateD">
 
   <label>Nom :</label>
   <input type="text" id="name">
@@ -94,113 +190,31 @@
   <label>Email :</label>
   <input type="email" id="email">
 
-  <label>Date d’arrivée :</label>
-  <input type="date" id="dateArrivee" onchange="updatePrice()">
-
-  <label>Date de départ :</label>
-  <input type="date" id="dateDepart" onchange="updatePrice()">
-
-  <label>Prix total (€) :</label>
-  <input type="number" id="price" readonly>
-
-  <button class="btn" onclick="pay()">Payer et réserver</button>
-
-  <div id="result" class="result"></div>
+  <button onclick="reserve()">Réserver</button>
 </div>
 
 <script>
-const BASE_URL = "https://h-e5oa.onrender.com";
+const params = new URLSearchParams(window.location.search);
+document.getElementById("bungalow").innerHTML = `
+  <option value="${params.get("bungalow")}">Bungalow ${params.get("bungalow")}</option>
+`;
 
-// 🔥 TARIFS
-// 130 € du dimanche au jeudi
-// 150 € vendredi et samedi
-function getNightPrice(date) {
-  const d = new Date(date);
-  const day = d.getDay(); // 0 = dimanche, 6 = samedi
+document.getElementById("dateA").value = params.get("dateA");
+document.getElementById("dateD").value = params.get("dateD");
 
-  if (day === 5 || day === 6) {
-    return 150; // vendredi (5) et samedi (6)
-  }
-  return 130; // dimanche à jeudi
-}
-
-// 🔥 Calcul automatique du prix total
-function updatePrice() {
-  const dateA = document.getElementById("dateArrivee").value;
-  const dateD = document.getElementById("dateDepart").value;
-
-  if (!dateA || !dateD) return;
-
-  const d1 = new Date(dateA);
-  const d2 = new Date(dateD);
-
-  const nights = (d2 - d1) / (1000 * 60 * 60 * 24);
-
-  if (nights <= 0) {
-    document.getElementById("price").value = "";
-    return;
-  }
-
-  let total = 0;
-  let current = new Date(dateA);
-
-  for (let i = 0; i < nights; i++) {
-    total += getNightPrice(current);
-    current.setDate(current.getDate() + 1);
-  }
-
-  document.getElementById("price").value = total;
-}
-
-// 🔥 Paiement Stripe
-async function pay() {
-  const bungalow = document.getElementById("bungalow").value;
+function reserve() {
+  const b = params.get("bungalow");
+  const a = params.get("dateA");
+  const d = params.get("dateD");
   const name = document.getElementById("name").value;
   const email = document.getElementById("email").value;
-  const dateA = document.getElementById("dateArrivee").value;
-  const dateD = document.getElementById("dateDepart").value;
-  const price = document.getElementById("price").value;
 
-  if (!name || !email || !dateA || !dateD || !price) {
-    document.getElementById("result").innerHTML = "❌ Veuillez remplir tous les champs.";
+  if (!name || !email) {
+    alert("Veuillez remplir tous les champs.");
     return;
   }
 
-  // Vérifier disponibilité
-  const res = await fetch(`${BASE_URL}/api/reservations`);
-  const data = await res.json();
-
-  const overlap = data.some(r =>
-    r.bungalow == bungalow &&
-    !(dateD <= r.dateArrivee || dateA >= r.dateDepart)
-  );
-
-  if (overlap) {
-    document.getElementById("result").innerHTML = "❌ Ce bungalow est occupé.";
-    return;
-  }
-
-  // Lancer Stripe
-  const session = await fetch(`${BASE_URL}/api/create-checkout-session`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      bungalow,
-      name,
-      email,
-      dateArrivee: dateA,
-      dateDepart: dateD,
-      price
-    })
-  });
-
-  const json = await session.json();
-
-  if (json.url) {
-    window.location.href = json.url;
-  } else {
-    document.getElementById("result").innerHTML = "❌ Erreur lors du paiement.";
-  }
+  window.location.href = `/confirmation.html?bungalow=${b}&dateA=${a}&dateD=${d}&name=${name}&email=${email}`;
 }
 </script>
 
