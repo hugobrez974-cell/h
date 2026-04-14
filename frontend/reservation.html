@@ -22,7 +22,6 @@
       padding: 2rem;
     }
 
-    /* MENU RESPONSIVE */
     header {
       position: sticky;
       top: 0;
@@ -91,16 +90,11 @@
       font-weight: 600;
     }
 
-    #mobileMenu a:hover {
-      color: var(--vert);
-    }
-
     @media (max-width: 900px) {
       nav.desktop-menu { display: none; }
       .burger { display: block; }
     }
 
-    /* FORMULAIRE */
     .container {
       max-width: 600px;
       margin: auto;
@@ -193,20 +187,22 @@
   <button onclick="reserve()">Réserver</button>
 </div>
 
+<!-- REMPLISSAGE AUTOMATIQUE + CHOIX BUNGALOW -->
 <script>
-// Remplissage automatique
 const params = new URLSearchParams(window.location.search);
+const bungalowChoisi = params.get("bungalow");
 
 document.getElementById("bungalow").innerHTML = `
-  <option value="${params.get("bungalow")}">Bungalow ${params.get("bungalow")}</option>
+  <option value="1" ${bungalowChoisi == 1 ? "selected" : ""}>Bungalow 1</option>
+  <option value="2" ${bungalowChoisi == 2 ? "selected" : ""}>Bungalow 2</option>
 `;
 
 document.getElementById("dateA").value = params.get("dateA");
 document.getElementById("dateD").value = params.get("dateD");
 </script>
 
+<!-- CALCUL DU PRIX -->
 <script>
-// Calcul du prix
 function calculerPrix(dateA, dateD) {
   const debut = new Date(dateA);
   const fin = new Date(dateD);
@@ -221,18 +217,18 @@ function calculerPrix(dateA, dateD) {
 }
 </script>
 
+<!-- ENVOI AU BACKEND + STRIPE -->
 <script>
 const BASE_URL = "https://h-e5oa.onrender.com";
 
 async function reserve() {
-  const params = new URLSearchParams(window.location.search);
-  const bungalow = params.get("bungalow");
-  const dateA = params.get("dateA");
-  const dateD = params.get("dateD");
+  const bungalow = document.getElementById("bungalow").value;
+  const dateA = document.getElementById("dateA").value;
+  const dateD = document.getElementById("dateD").value;
   const name = document.getElementById("name").value;
   const email = document.getElementById("email").value;
 
-  if (!name || !email) {
+  if (!name || !email || !dateA || !dateD) {
     alert("Veuillez remplir tous les champs.");
     return;
   }
