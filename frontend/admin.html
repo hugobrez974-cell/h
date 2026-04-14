@@ -22,7 +22,7 @@
       padding: 2rem;
     }
 
-    /* MENU MODERNE RESPONSIVE */
+    /* MENU RESPONSIVE IDENTIQUE À main.html */
     header {
       position: sticky;
       top: 0;
@@ -172,7 +172,6 @@
 
 <body>
 
-<!-- MENU -->
 <header>
   <div class="logo">Les tonneaux des Ô</div>
 
@@ -192,8 +191,8 @@
   <a href="/main.html" onclick="toggleMenu()">Accueil</a>
   <a href="/dispo.html" onclick="toggleMenu()">Disponibilités</a>
   <a href="/reservation.html" onclick="toggleMenu()">Réserver</a>
-  <a href="/nos-bungalows.html" onclick="toggleMenu()">Bungalows</a>
-  <a href="/contact.html" onclick="toggleMenu()">Contact</a>
+  <a href="/main.html" onclick="toggleMenu()">Bungalows</a>
+  <a href="/main.html" onclick="toggleMenu()">Contact</a>
   <a href="/admin.html" onclick="toggleMenu()">Admin</a>
   <a href="#" onclick="toggleMenu()">Fermer</a>
 </div>
@@ -203,8 +202,7 @@
     document.getElementById("mobileMenu").classList.toggle("open");
   }
 </script>
-
-<h1>📋 Administration – Les Tonneaux des Ô</h1>
+  <h1>📋 Administration – Les Tonneaux des Ô</h1>
 
 <h2>Créer une pré-réservation (bloquer les dates)</h2>
 <div class="form-container">
@@ -253,7 +251,6 @@
   </thead>
   <tbody></tbody>
 </table>
-
 <script>
 const BASE_URL = "https://h-e5oa.onrender.com";
 
@@ -455,6 +452,6 @@ async function deleteReservation(id) {
 
 loadReservations();
 </script>
-
 </body>
 </html>
+
