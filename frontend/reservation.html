@@ -169,8 +169,13 @@
 <h1 style="text-align:center;color:var(--bois);margin-top:2rem;">Réserver votre séjour</h1>
 
 <div class="container">
-  <label>Bungalow :</label>
-  <select id="bungalow"></select>
+
+  <label>Bungalows :</label>
+  <select id="bungalow">
+    <option value="1">Bungalow 1</option>
+    <option value="2">Bungalow 2</option>
+    <option value="1,2">Les deux bungalows</option>
+  </select>
 
   <label>Date d’arrivée :</label>
   <input type="date" id="dateA">
@@ -187,15 +192,14 @@
   <button onclick="reserve()">Réserver</button>
 </div>
 
-<!-- REMPLISSAGE AUTOMATIQUE + CHOIX BUNGALOW -->
+<!-- REMPLISSAGE AUTOMATIQUE -->
 <script>
 const params = new URLSearchParams(window.location.search);
 const bungalowChoisi = params.get("bungalow");
 
-document.getElementById("bungalow").innerHTML = `
-  <option value="1" ${bungalowChoisi == 1 ? "selected" : ""}>Bungalow 1</option>
-  <option value="2" ${bungalowChoisi == 2 ? "selected" : ""}>Bungalow 2</option>
-`;
+if (bungalowChoisi) {
+  document.getElementById("bungalow").value = bungalowChoisi;
+}
 
 document.getElementById("dateA").value = params.get("dateA");
 document.getElementById("dateD").value = params.get("dateD");
@@ -222,7 +226,9 @@ function calculerPrix(dateA, dateD) {
 const BASE_URL = "https://h-e5oa.onrender.com";
 
 async function reserve() {
-  const bungalow = document.getElementById("bungalow").value;
+  const bungalowValue = document.getElementById("bungalow").value;
+  const bungalows = bungalowValue.split(","); // ["1"], ["2"], ["1","2"]
+
   const dateA = document.getElementById("dateA").value;
   const dateD = document.getElementById("dateD").value;
   const name = document.getElementById("name").value;
@@ -233,13 +239,14 @@ async function reserve() {
     return;
   }
 
-  const price = calculerPrix(dateA, dateD);
+  const nbBungalows = bungalows.length;
+  const price = calculerPrix(dateA, dateD) * nbBungalows;
 
   const res = await fetch(`${BASE_URL}/api/create-checkout-session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      bungalow,
+      bungalow: bungalowValue, // "1", "2", "1,2"
       name,
       email,
       dateArrivee: dateA,
