@@ -217,7 +217,7 @@ function calculerPrix(dateA, dateD) {
 }
 </script>
 
-<!-- ENVOI AU BACKEND + STRIPE -->
+<!-- ENVOI AU BACKEND (Checkout Session) -->
 <script>
 const BASE_URL = "https://h-e5oa.onrender.com";
 
@@ -235,7 +235,7 @@ async function reserve() {
 
   const price = calculerPrix(dateA, dateD);
 
-  const res = await fetch(`${BASE_URL}/api/admin/create-payment-link`, {
+  const res = await fetch(`${BASE_URL}/api/create-checkout-session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -250,10 +250,10 @@ async function reserve() {
 
   const json = await res.json();
 
-  if (json.success && json.url) {
+  if (json.url) {
     window.location.href = json.url;
   } else {
-    alert("Erreur lors de la création du lien de paiement.");
+    alert("Erreur lors de la création du paiement.");
   }
 }
 </script>
