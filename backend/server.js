@@ -32,11 +32,38 @@ function saveReservations(data) {
 app.post("/api/create-checkout-session", async (req, res) => {
   const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
 
+  if (!bungalow || !name || !email || !dateArrivee || !dateDepart || !price) {
+    return res.status(400).json({ error: "Champs manquants" });
+  }
+
+  // 1️⃣ Créer la réservation en "pending"
+  const reservations = loadReservations();
+
+  const newReservation = {
+    bungalow,
+    name,
+    email,
+    dateArrivee,
+    dateDepart,
+    price,
+    status: "pending",
+    createdAt: new Date().toISOString(),
+  };
+
+  reservations.push(newReservation);
+  saveReservations(reservations);
+
+  const index = reservations.length - 1;
+
   try {
+    // 2️⃣ Créer la session Stripe avec l'index en metadata
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       customer_email: email,
+      metadata: {
+        index: index.toString(),
+      },
       line_items: [
         {
           price_data: {
@@ -55,24 +82,36 @@ app.post("/api/create-checkout-session", async (req, res) => {
         "https://h-1-y7xu.onrender.com/cancel.html?session_id={CHECKOUT_SESSION_ID}",
     });
 
-    const reservations = loadReservations();
-    reservations.push({
-      bungalow,
-      name,
-      email,
-      dateArrivee,
-      dateDepart,
-      price,
-      sessionId: session.id,
-      status: "paid",
-      createdAt: new Date().toISOString(),
-    });
-    saveReservations(reservations);
-
     res.json({ url: session.url });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Erreur Stripe" });
+  }
+});
+
+// ---------------------------------------------------------
+// 🔥 CONFIRMATION PAIEMENT (APPELÉE PAR success.html)
+// ---------------------------------------------------------
+app.post("/api/confirm-payment", async (req, res) => {
+  const { sessionId } = req.body;
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const index = parseInt(session.metadata.index);
+
+    const reservations = loadReservations();
+    if (!reservations[index]) {
+      return res.status(404).json({ error: "Réservation introuvable" });
+    }
+
+    reservations[index].status = "paid";
+    reservations[index].sessionId = sessionId;
+    saveReservations(reservations);
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Erreur confirmation paiement" });
   }
 });
 
@@ -182,7 +221,6 @@ app.post("/api/admin/create-payment-link", async (req, res) => {
   }
 
   try {
-    // 1️⃣ Créer un produit Stripe temporaire
     const product = await stripe.products.create({
       name: `Réservation Bungalow ${bungalow} (${dateArrivee} → ${dateDepart})`,
     });
@@ -193,7 +231,6 @@ app.post("/api/admin/create-payment-link", async (req, res) => {
       currency: "eur",
     });
 
-    // 2️⃣ Créer un lien de paiement
     const paymentLink = await stripe.paymentLinks.create({
       line_items: [{ price: priceStripe.id, quantity: 1 }],
       after_completion: {
@@ -204,7 +241,6 @@ app.post("/api/admin/create-payment-link", async (req, res) => {
       },
     });
 
-    // 3️⃣ Mettre à jour la réservation avec le lien
     const reservations = loadReservations();
     if (typeof index === "number" && reservations[index]) {
       reservations[index].paymentLink = paymentLink.url;
@@ -269,28 +305,27 @@ function generateInvoice(res, reservation, invoiceId) {
   doc.text(`Montant : ${reservation.price} €`);
   doc.moveDown(2);
 
-doc.fontSize(12).text("Merci pour votre confiance !");
-doc.text("À très bientôt aux Tonneaux des Ô.");
-doc.text("Nous contacter au +262 693 63 66 81 ou par nos réseaux sociaux");
-doc.moveDown(1);
+  doc.fontSize(12).text("Merci pour votre confiance !");
+  doc.text("À très bientôt aux Tonneaux des Ô.");
+  doc.text("Nous contacter au +262 693 63 66 81 ou par nos réseaux sociaux");
+  doc.moveDown(1);
 
-// 🔥 Ajout du site et du lien Google Maps
-doc.fontSize(12).fillColor("blue").text(
-  "Site web : https://h-1-y7xu.onrender.com/",
-  { link: "https://h-1-y7xu.onrender.com/", underline: true }
-);
+  doc.fontSize(12).fillColor("blue").text(
+    "Site web : https://h-1-y7xu.onrender.com/",
+    { link: "https://h-1-y7xu.onrender.com/", underline: true }
+  );
 
-doc.moveDown(0.5);
+  doc.moveDown(0.5);
 
-doc.fontSize(12).fillColor("blue").text(
-  "Voir sur Google Maps : Les Tonneaux des Ô, Bois Court, La Réunion",
-  {
-    link: "https://maps.app.goo.gl/mN6qmCc6vyYHPfSb7",
-    underline: true
-  }
-);
+  doc.fontSize(12).fillColor("blue").text(
+    "Voir sur Google Maps : Les Tonneaux des Ô, Bois Court, La Réunion",
+    {
+      link: "https://maps.app.goo.gl/mN6qmCc6vyYHPfSb7",
+      underline: true,
+    }
+  );
 
-doc.end();
+  doc.end();
 }
 
 // ---------------------------------------------------------
