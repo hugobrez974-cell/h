@@ -10,8 +10,6 @@
       --bois: #5A4633;
       --sable: #F4E9D8;
       --vert: #A7C4A0;
-      --blanc: #d6c7a0;
-      --or: #D9B77A;
       --texte: #3A2F25;
     }
 
@@ -22,85 +20,6 @@
       padding: 2rem;
     }
 
-    /* MENU RESPONSIVE */
-    header {
-      position: sticky;
-      top: 0;
-      background: rgba(255,255,255,0.9);
-      backdrop-filter: blur(10px);
-      padding: 1rem 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #e5d8c8;
-      z-index: 10000;
-    }
-
-    .logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.4rem;
-      color: var(--bois);
-    }
-
-    nav.desktop-menu {
-      display: flex;
-      gap: 1.5rem;
-    }
-
-    nav.desktop-menu a {
-      text-decoration: none;
-      color: var(--bois);
-      font-weight: 600;
-    }
-
-    nav.desktop-menu a:hover {
-      color: var(--vert);
-    }
-
-    .burger {
-      display: none;
-      font-size: 28px;
-      cursor: pointer;
-      color: var(--bois);
-    }
-
-    #mobileMenu {
-      position: fixed;
-      top: 0;
-      right: -500px;
-      width: 260px;
-      height: 100%;
-      background: var(--bois);
-      color: var(--sable);
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      transition: right 0.35s ease;
-      z-index: 99999;
-    }
-
-    #mobileMenu.open {
-      right: 0;
-    }
-
-    #mobileMenu a {
-      color: var(--sable);
-      text-decoration: none;
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-
-    #mobileMenu a:hover {
-      color: var(--vert);
-    }
-
-    @media (max-width: 900px) {
-      nav.desktop-menu { display: none; }
-      .burger { display: block; }
-    }
-
-    /* FORMULAIRE */
     .container {
       max-width: 600px;
       margin: auto;
@@ -109,20 +28,6 @@
       border-radius: 10px;
       border: 1px solid #d2c1a5;
       margin-top: 2rem;
-    }
-
-    label {
-      font-weight: 600;
-      color: var(--bois);
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border-radius: 6px;
-      border: 1px solid #b9a58a;
     }
 
     button {
@@ -134,9 +39,34 @@
       font-weight: 700;
       cursor: pointer;
       color: var(--bois);
+      margin-top: 1rem;
     }
 
     button:hover {
+      background: #8fb88f;
+    }
+
+    .result {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #d2c1a5;
+    }
+
+    .bungalow-btn {
+      padding: 12px;
+      background: var(--vert);
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--bois);
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .bungalow-btn:hover {
       background: #8fb88f;
     }
   </style>
@@ -144,42 +74,9 @@
 
 <body>
 
-<header>
-  <div class="logo">Les tonneaux des Ô</div>
-  <div class="burger" onclick="toggleMenu()">☰</div>
-
-  <nav class="desktop-menu">
-    <a href="/main.html">Accueil</a>
-    <a href="/dispo.html">Disponibilités</a>
-    <a href="/reservation.html">Réserver</a>
-    <a href="/main.html">Bungalows</a>
-    <a href="/main.html">Contact</a>
-  </nav>
-</header>
-
-<div id="mobileMenu">
-  <a href="/main.html" onclick="toggleMenu()">Accueil</a>
-  <a href="/dispo.html" onclick="toggleMenu()">Disponibilités</a>
-  <a href="/reservation.html" onclick="toggleMenu()">Réserver</a>
-  <a href="/main.html" onclick="toggleMenu()">Bungalows</a>
-  <a href="/main.html" onclick="toggleMenu()">Contact</a>
-  <a href="#" onclick="toggleMenu()">Fermer</a>
-</div>
-
-<script>
-  function toggleMenu() {
-    document.getElementById("mobileMenu").classList.toggle("open");
-  }
-</script>
-
-<h1 style="text-align:center;color:var(--bois);margin-top:2rem;">Vérifier les disponibilités</h1>
+<h1 style="text-align:center;color:var(--bois);">Vérifier les disponibilités</h1>
 
 <div class="container">
-  <label>Bungalow :</label>
-  <select id="bungalow">
-    <option value="1">Bungalow 1</option>
-    <option value="2">Bungalow 2</option>
-  </select>
 
   <label>Date d’arrivée :</label>
   <input type="date" id="dateA">
@@ -187,45 +84,77 @@
   <label>Date de départ :</label>
   <input type="date" id="dateD">
 
-  <button onclick="check()">Vérifier</button>
+  <button onclick="checkDispo()">Voir les disponibilités</button>
+
+  <div id="result" class="result" style="display:none;"></div>
+
 </div>
 
 <script>
 const BASE_URL = "https://h-e5oa.onrender.com";
 
-async function check() {
-  const bungalow = document.getElementById("bungalow").value;
+// Vérifier si une période chevauche une réservation existante
+function chevauche(a1, d1, a2, d2) {
+  return !(d1 <= a2 || d2 <= a1);
+}
+
+async function checkDispo() {
   const dateA = document.getElementById("dateA").value;
   const dateD = document.getElementById("dateD").value;
 
-  // Vérif 1 : dates remplies
   if (!dateA || !dateD) {
-    alert("Veuillez choisir les deux dates.");
+    alert("Veuillez choisir deux dates.");
     return;
   }
 
-  // Vérif 2 : ordre des dates
-  if (new Date(dateA) >= new Date(dateD)) {
-    alert("La date de départ doit être après la date d’arrivée.");
-    return;
-  }
-
-  // Vérif 3 : disponibilité via API
   const res = await fetch(`${BASE_URL}/api/reservations`);
-  const data = await res.json();
+  const reservations = await res.json();
 
-  const overlap = data.some(r =>
-    r.bungalow == bungalow &&
-    !(dateD <= r.dateArrivee || dateA >= r.dateDepart)
-  );
+  let dispo1 = true;
+  let dispo2 = true;
 
-  if (overlap) {
-    alert("❌ Ce bungalow est déjà réservé sur ces dates.");
-    return;
+  reservations.forEach(r => {
+    if (chevauche(dateA, dateD, r.dateArrivee, r.dateDepart)) {
+      if (r.bungalow.includes("1")) dispo1 = false;
+      if (r.bungalow.includes("2")) dispo2 = false;
+    }
+  });
+
+  let html = "<h3>Bungalows disponibles :</h3>";
+
+  if (dispo1) {
+    html += `
+      <button class="bungalow-btn"
+        onclick="goResa('1')">Réserver le Bungalow 1</button>`;
   }
 
-  // OK → redirection
-  window.location.href = `/reservation.html?bungalow=${bungalow}&dateA=${dateA}&dateD=${dateD}`;
+  if (dispo2) {
+    html += `
+      <button class="bungalow-btn"
+        onclick="goResa('2')">Réserver le Bungalow 2</button>`;
+  }
+
+  if (dispo1 && dispo2) {
+    html += `
+      <button class="bungalow-btn"
+        onclick="goResa('1,2')">Réserver les deux bungalows</button>`;
+  }
+
+  if (!dispo1 && !dispo2) {
+    html = "<p>Aucun bungalow n'est disponible à ces dates.</p>";
+  }
+
+  const result = document.getElementById("result");
+  result.innerHTML = html;
+  result.style.display = "block";
+}
+
+function goResa(bungalow) {
+  const dateA = document.getElementById("dateA").value;
+  const dateD = document.getElementById("dateD").value;
+
+  window.location.href =
+    `/reservation.html?bungalow=${bungalow}&dateA=${dateA}&dateD=${dateD}`;
 }
 </script>
 
