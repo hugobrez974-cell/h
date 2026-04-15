@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Musique </title>
+    <title>Lecteur Spotify</title>
 
     <style>
         body {
@@ -163,7 +163,7 @@
 <body>
 
 <div class="content">
-    <h1>musique college </h1>
+    <h1 id="welcomeTitle">🎵 Musique disponible</h1>
     <div class="grid" id="liste"></div>
 </div>
 
@@ -187,102 +187,140 @@
 </div>
 
 <script>
-    const container = document.getElementById("liste");
-    const playlist = document.getElementById("playlist");
-    const audio = document.getElementById("audioPlayer");
+/* ------------------------------
+   GESTION DU PRENOM AVEC COOKIE
+--------------------------------*/
+function setCookie(name, value, days) {
+    const d = new Date();
+    d.setTime(d.getTime() + (days*24*60*60*1000));
+    document.cookie = name + "=" + value + ";expires="+ d.toUTCString() + ";path=/";
+}
 
-    const playBtn = document.getElementById("playBtn");
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
-
-    const timeline = document.getElementById("timeline");
-    const currentTitle = document.getElementById("currentTitle");
-
-    let mp3Files = [];
-    let currentIndex = -1;
-
-    function playTrack(index) {
-        currentIndex = index;
-        const file = mp3Files[index];
-        const name = file.replace("/", "");
-
-        audio.src = file;
-        audio.play();
-
-        currentTitle.textContent = name;
-        playBtn.textContent = "⏸";
-
-        document.querySelectorAll(".track-item").forEach(el => el.classList.remove("active"));
-        document.getElementById("track-" + btoa(file)).classList.add("active");
+function getCookie(name) {
+    let cname = name + "=";
+    let decoded = decodeURIComponent(document.cookie);
+    let ca = decoded.split(';');
+    for(let c of ca) {
+        c = c.trim();
+        if (c.indexOf(cname) === 0) return c.substring(cname.length, c.length);
     }
+    return "";
+}
 
-    function playNext() {
-        if (currentIndex < mp3Files.length - 1) {
-            playTrack(currentIndex + 1);
-        }
+let prenom = getCookie("prenom");
+
+if (!prenom) {
+    prenom = prompt("Quel est ton prénom ?");
+    if (prenom && prenom.trim() !== "") {
+        setCookie("prenom", prenom, 365);
+    } else {
+        prenom = "invité";
     }
+}
 
-    function playPrev() {
-        if (currentIndex > 0) {
-            playTrack(currentIndex - 1);
-        }
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("welcomeTitle").innerHTML = "🎵 Bonjour " + prenom + " — Playlist Spotify";
+});
+
+/* ------------------------------
+   LECTEUR SPOTIFY
+--------------------------------*/
+const container = document.getElementById("liste");
+const playlist = document.getElementById("playlist");
+const audio = document.getElementById("audioPlayer");
+
+const playBtn = document.getElementById("playBtn");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+
+const timeline = document.getElementById("timeline");
+const currentTitle = document.getElementById("currentTitle");
+
+let mp3Files = [];
+let currentIndex = -1;
+
+function playTrack(index) {
+    currentIndex = index;
+    const file = mp3Files[index];
+    const name = file.replace("/", "");
+
+    audio.src = file;
+    audio.play();
+
+    currentTitle.textContent = name;
+    playBtn.textContent = "⏸";
+
+    document.querySelectorAll(".track-item").forEach(el => el.classList.remove("active"));
+    document.getElementById("track-" + btoa(file)).classList.add("active");
+}
+
+function playNext() {
+    if (currentIndex < mp3Files.length - 1) {
+        playTrack(currentIndex + 1);
     }
+}
 
-    // Charger automatiquement mp3.json
-    fetch("mp3.json")
-        .then(r => r.json())
-        .then(files => {
-            mp3Files = files;
+function playPrev() {
+    if (currentIndex > 0) {
+        playTrack(currentIndex - 1);
+    }
+}
 
-            files.forEach((file, index) => {
-                const name = file.replace("/", "");
+// Charger automatiquement mp3.json
+fetch("mp3.json")
+    .then(r => r.json())
+    .then(files => {
+        mp3Files = files;
 
-                // Cartes
-                const div = document.createElement("div");
-                div.className = "card";
-                div.innerHTML = `
-                    <div class="cover">🎧</div>
-                    <div class="title">${name}</div>
-                `;
-                div.onclick = () => playTrack(index);
-                container.appendChild(div);
+        files.forEach((file, index) => {
+            const name = file.replace("/", "");
 
-                // Playlist
-                const item = document.createElement("div");
-                item.className = "track-item";
-                item.id = "track-" + btoa(file);
-                item.textContent = name;
-                item.onclick = () => playTrack(index);
-                playlist.appendChild(item);
-            });
+            // Cartes
+            const div = document.createElement("div");
+            div.className = "card";
+            div.innerHTML = `
+                <div class="cover">🎧</div>
+                <div class="title">${name}</div>
+            `;
+            div.onclick = () => playTrack(index);
+            container.appendChild(div);
+
+            // Playlist
+            const item = document.createElement("div");
+            item.className = "track-item";
+            item.id = "track-" + btoa(file);
+            item.textContent = name;
+            item.onclick = () => playTrack(index);
+            playlist.appendChild(item);
         });
+    });
 
-    // Play/Pause
-    playBtn.onclick = () => {
-        if (audio.paused) {
-            audio.play();
-            playBtn.textContent = "⏸";
-        } else {
-            audio.pause();
-            playBtn.textContent = "▶";
-        }
-    };
+// Play/Pause
+playBtn.onclick = () => {
+    if (audio.paused) {
+        audio.play();
+        playBtn.textContent = "⏸";
+    } else {
+        audio.pause();
+        playBtn.textContent = "▶";
+    }
+};
 
-    // Suivant / Précédent
-    nextBtn.onclick = playNext;
-    prevBtn.onclick = playPrev;
+// Suivant / Précédent
+nextBtn.onclick = playNext;
+prevBtn.onclick = playPrev;
 
-    // Timeline
-    audio.ontimeupdate = () => {
-        timeline.value = (audio.currentTime / audio.duration) * 100;
-    };
+// Timeline
+audio.ontimeupdate = () => {
+    timeline.value = (audio.currentTime / audio.duration) * 100;
+};
 
-    timeline.oninput = () => {
-        audio.currentTime = (timeline.value / 100) * audio.duration;
-    };
+timeline.oninput = () => {
+    audio.currentTime = (timeline.value / 100) * audio.duration;
+};
 
-    // Quand une musique se termine → passer à la suivante
-    audio.onended = playNext;
+// Quand une musique se termine → passer à la suivante
+audio.onended = playNext;
 </script>
 
 </body>
