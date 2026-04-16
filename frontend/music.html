@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Musique</title>
+    <title>Lecteur Spotify</title>
 
     <style>
         body {
@@ -20,8 +20,13 @@
 
         h1 {
             font-size: 32px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             font-weight: 700;
+        }
+
+        h2 {
+            margin-top: 10px;
+            margin-bottom: 10px;
         }
 
         .grid {
@@ -69,6 +74,10 @@
             padding: 20px;
             overflow-y: auto;
             height: calc(100vh - 120px);
+        }
+
+        .playlist h2 {
+            margin-top: 0;
         }
 
         .track-item {
@@ -141,6 +150,11 @@
             flex: 1;
         }
 
+        .track-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
         .timeline {
             width: 100%;
         }
@@ -148,12 +162,24 @@
         .volume-slider {
             width: 120px;
         }
+
+        #uploadForm input[type="file"] {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="content">
-    <h1 id="welcomeTitle">🎵 Playlist Spotify</h1>
+    <h1 id="welcomeTitle">🎵 Musique disponible </h1>
+
+    <h2>Ajouter une musique</h2>
+    <form id="uploadForm" enctype="multipart/form-data" style="margin-bottom:20px;">
+        <input type="file" name="fichier" accept=".mp3" required>
+        <button type="submit">Téléverser</button>
+    </form>
+    <p id="uploadStatus" style="opacity:0.8;"></p>
+
     <div class="grid" id="liste"></div>
 </div>
 
@@ -208,7 +234,7 @@ if (!prenom) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("welcomeTitle").innerHTML = "🎵 Bonjour " + prenom + " — Musique disponible";
+    document.getElementById("welcomeTitle").innerHTML = "🎵 Bonjour " + prenom + " — Playlist Spotify";
 });
 
 /* ------------------------------
@@ -229,7 +255,7 @@ const volumeSlider = document.getElementById("volumeSlider");
 const timeline = document.getElementById("timeline");
 const currentTitle = document.getElementById("currentTitle");
 
-let mp3Files = [];
+let mp3Files = []; // [{file, addedBy}]
 let currentIndex = -1;
 let shuffle = false;
 let repeat = false;
@@ -240,21 +266,24 @@ function randomColor() {
 
 function playTrack(index) {
     currentIndex = index;
-    const file = mp3Files[index];
-    const name = file.replace("/", "");
+    const obj = mp3Files[index];
+    const file = obj.file;
+    const name = file.split("/").pop();
+    const addedBy = obj.addedBy || "le créateur";
 
     audio.src = file;
     audio.play();
 
-    currentTitle.textContent = name;
+    currentTitle.textContent = name + " — ajouté par " + addedBy;
     playBtn.textContent = "⏸";
 
     document.querySelectorAll(".track-item").forEach(el => el.classList.remove("active"));
-    document.getElementById("track-" + btoa(file)).classList.add("active");
+    const active = document.getElementById("track-" + btoa(file));
+    if (active) active.classList.add("active");
 }
 
 function playNext() {
-    if (shuffle) {
+    if (shuffle && mp3Files.length > 0) {
         playTrack(Math.floor(Math.random() * mp3Files.length));
     } else if (currentIndex < mp3Files.length - 1) {
         playTrack(currentIndex + 1);
@@ -262,7 +291,7 @@ function playNext() {
 }
 
 function playPrev() {
-    if (shuffle) {
+    if (shuffle && mp3Files.length > 0) {
         playTrack(Math.floor(Math.random() * mp3Files.length));
     } else if (currentIndex > 0) {
         playTrack(currentIndex - 1);
@@ -274,14 +303,17 @@ fetch("mp3.json")
     .then(files => {
         mp3Files = files;
 
-        files.forEach((file, index) => {
-            const name = file.replace("/", "");
+        files.forEach((obj, index) => {
+            const file = obj.file;
+            const addedBy = obj.addedBy || "le créateur";
+            const name = file.split("/").pop();
 
             const div = document.createElement("div");
             div.className = "card";
             div.innerHTML = `
                 <div class="cover" style="background:${randomColor()}">🎧</div>
                 <div class="title">${name}</div>
+                <small style="opacity:0.7">Ajouté par ${addedBy}</small>
             `;
             div.onclick = () => playTrack(index);
             container.appendChild(div);
@@ -289,7 +321,7 @@ fetch("mp3.json")
             const item = document.createElement("div");
             item.className = "track-item";
             item.id = "track-" + btoa(file);
-            item.textContent = name;
+            item.innerHTML = `${name}<br><small style="opacity:0.7">Ajouté par ${addedBy}</small>`;
             item.onclick = () => playTrack(index);
             playlist.appendChild(item);
         });
@@ -328,16 +360,50 @@ volumeSlider.oninput = () => {
 };
 
 audio.ontimeupdate = () => {
-    timeline.value = (audio.currentTime / audio.duration) * 100;
+    if (!isNaN(audio.duration) && audio.duration > 0) {
+        timeline.value = (audio.currentTime / audio.duration) * 100;
+    }
 };
 
 timeline.oninput = () => {
-    audio.currentTime = (timeline.value / 100) * audio.duration;
+    if (!isNaN(audio.duration) && audio.duration > 0) {
+        audio.currentTime = (timeline.value / 100) * audio.duration;
+    }
 };
 
 audio.onended = () => {
     if (repeat) playTrack(currentIndex);
     else playNext();
+};
+
+/* ------------------------------
+   UPLOAD MP3
+--------------------------------*/
+document.getElementById("uploadForm").onsubmit = async (e) => {
+    e.preventDefault();
+
+    const status = document.getElementById("uploadStatus");
+    status.textContent = "Téléversement en cours...";
+
+    const formData = new FormData();
+    formData.append("fichier", e.target.fichier.files[0]);
+    formData.append("prenom", prenom);
+
+    try {
+        const res = await fetch("/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        const txt = await res.text();
+        status.textContent = txt;
+
+        if (res.ok) {
+            alert("Musique envoyée ! Elle apparaîtra après le prochain déploiement.");
+        }
+    } catch (err) {
+        status.textContent = "Erreur lors du téléversement.";
+    }
 };
 </script>
 
