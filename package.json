@@ -5,5 +5,8 @@
   "scripts": {
     "start": "cd backend && npm install && node server.js",
     "build": "node frontend/package.json"
-  }
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5
 }
