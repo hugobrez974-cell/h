@@ -6,15 +6,15 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Dossier uploads dans frontend
-const uploadFolder = path.join(__dirname, "../frontend/uploads");
+// Dossier frontend
+const frontend = path.join(__dirname, "frontend");
+
+// Dossier uploads
+const uploadFolder = path.join(frontend, "uploads");
 if (!fs.existsSync(uploadFolder)) fs.mkdirSync(uploadFolder, { recursive: true });
 
-// Fonction pour régénérer mp3.json instantanément
+// Fonction pour régénérer mp3.json
 function regenerateMp3Json() {
-    const frontend = path.join(__dirname, "../frontend");
-    const uploadFolder = path.join(frontend, "uploads");
-
     let files = [];
 
     // Fichiers du créateur
@@ -28,26 +28,24 @@ function regenerateMp3Json() {
     });
 
     // Fichiers uploadés
-    if (fs.existsSync(uploadFolder)) {
-        fs.readdirSync(uploadFolder).forEach(f => {
-            if (f.endsWith(".mp3")) {
-                const metaFile = path.join(uploadFolder, f + ".meta.json");
-                let addedBy = "le créateur";
+    fs.readdirSync(uploadFolder).forEach(f => {
+        if (f.endsWith(".mp3")) {
+            const metaFile = path.join(uploadFolder, f + ".meta.json");
+            let addedBy = "le créateur";
 
-                if (fs.existsSync(metaFile)) {
-                    try {
-                        const meta = JSON.parse(fs.readFileSync(metaFile));
-                        addedBy = meta.addedBy || "le créateur";
-                    } catch (e) {}
-                }
-
-                files.push({
-                    file: "/uploads/" + f,
-                    addedBy
-                });
+            if (fs.existsSync(metaFile)) {
+                try {
+                    const meta = JSON.parse(fs.readFileSync(metaFile));
+                    addedBy = meta.addedBy || "le créateur";
+                } catch (e) {}
             }
-        });
-    }
+
+            files.push({
+                file: "/uploads/" + f,
+                addedBy
+            });
+        }
+    });
 
     fs.writeFileSync(
         path.join(frontend, "mp3.json"),
@@ -69,7 +67,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Servir le frontend
-app.use(express.static(path.join(__dirname, "../frontend")));
+app.use(express.static(frontend));
 
 // Upload route
 app.post("/upload", upload.single("fichier"), (req, res) => {
@@ -80,7 +78,6 @@ app.post("/upload", upload.single("fichier"), (req, res) => {
         const metaPath = path.join(uploadFolder, req.file.filename + ".meta.json");
         fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 
-        // Mise à jour instantanée
         regenerateMp3Json();
 
         res.send("Fichier téléversé avec succès !");
@@ -92,6 +89,6 @@ app.post("/upload", upload.single("fichier"), (req, res) => {
 
 // Démarrage
 app.listen(PORT, () => {
-    console.log("Backend OK sur port", PORT);
-    regenerateMp3Json(); // Génère mp3.json au démarrage
+    console.log("Serveur lancé sur port", PORT);
+    regenerateMp3Json();
 });
