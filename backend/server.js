@@ -1,18 +1,47 @@
 import express from "express";
-import cors from "cors";
 import fs from "fs";
 import path from "path";
 import Stripe from "stripe";
 import PDFDocument from "pdfkit";
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// 📌 Chemin vers data.json (à la racine de backend)
+// 🌐 Domaines autorisés
+const allowedOrigins = [
+  "https://les-tonneaux-des-o.onrender.com", // ton site officiel
+  "http://localhost:3000",                   // pour tests locaux
+  "http://127.0.0.1:3000",                   // pour tests locaux
+  "http://165.169.59.79",                    // ton IP publique
+  "http://165.169.59.79:3000"                // ton IP avec port
+];
+
+// 🔒 Middleware CORS sécurisé
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+    return next();
+  }
+
+  // ❌ Toute autre origine = accès refusé
+  return res.status(403).json({
+    error: "Accès refusé : domaine non autorisé"
+  });
+});
+
+// 🌐 Route d’accueil (évite Cannot GET /)
+app.get("/", (req, res) => {
+  res.send("Backend Les Tonneaux des Ô opérationnel ✔");
+});
+
+// 📌 Chemin vers data.json
 const dataPath = path.join(process.cwd(), "data.json");
 
 // 📌 Charger les réservations
@@ -36,7 +65,6 @@ app.post("/api/create-checkout-session", async (req, res) => {
     return res.status(400).json({ error: "Champs manquants" });
   }
 
-  // 1️⃣ Créer la réservation en "pending"
   const reservations = loadReservations();
 
   const newReservation = {
@@ -56,14 +84,11 @@ app.post("/api/create-checkout-session", async (req, res) => {
   const index = reservations.length - 1;
 
   try {
-    // 2️⃣ Créer la session Stripe avec l'index en metadata
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       customer_email: email,
-      metadata: {
-        index: index.toString(),
-      },
+      metadata: { index: index.toString() },
       line_items: [
         {
           price_data: {
@@ -77,9 +102,9 @@ app.post("/api/create-checkout-session", async (req, res) => {
         },
       ],
       success_url:
-        "https://h-1-y7xu.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
+        "https://les-tonneaux-des-o.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
       cancel_url:
-        "https://h-1-y7xu.onrender.com/cancel.html?session_id={CHECKOUT_SESSION_ID}",
+        "https://les-tonneaux-des-o.onrender.com/cancel.html?session_id={CHECKOUT_SESSION_ID}",
     });
 
     res.json({ url: session.url });
@@ -90,7 +115,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 CONFIRMATION PAIEMENT (APPELÉE PAR success.html)
+// 🔥 CONFIRMATION PAIEMENT
 // ---------------------------------------------------------
 app.post("/api/confirm-payment", async (req, res) => {
   const { sessionId } = req.body;
@@ -123,7 +148,7 @@ app.get("/api/reservations", (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 SAUVEGARDE DES RÉSERVATIONS (ADMIN SUPPRESSION / MODIF)
+// 🔥 SAUVEGARDE DES RÉSERVATIONS (ADMIN)
 // ---------------------------------------------------------
 app.post("/api/reservations", (req, res) => {
   const data = req.body;
@@ -135,7 +160,7 @@ app.post("/api/reservations", (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 FACTURE STRIPE (PDF OFFICIEL STRIPE)
+// 🔥 FACTURE STRIPE (PDF OFFICIEL)
 // ---------------------------------------------------------
 app.get("/api/invoice/:sessionId", async (req, res) => {
   try {
@@ -150,18 +175,18 @@ app.get("/api/invoice/:sessionId", async (req, res) => {
     const invoice = await stripe.invoices.retrieve(session.invoice);
 
     if (!invoice.invoice_pdf) {
-      return res.status(404).json({ error: "PDF de facture indisponible" });
+      return res.status(404).json({ error: "PDF indisponible" });
     }
 
     res.json({ url: invoice.invoice_pdf });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "Erreur lors de la récupération facture" });
+    res.status(500).json({ error: "Erreur facture Stripe" });
   }
 });
 
 // ---------------------------------------------------------
-// 🔥 FACTURE PDF PERSONNALISÉE (CLIENT, via sessionId Stripe)
+// 🔥 FACTURE PDF PERSONNALISÉE
 // ---------------------------------------------------------
 app.get("/api/custom-invoice/:sessionId", (req, res) => {
   const reservations = loadReservations();
@@ -172,7 +197,7 @@ app.get("/api/custom-invoice/:sessionId", (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 ADMIN : FACTURE PAR INDEX (SANS STRIPE)
+// 🔥 ADMIN : FACTURE PAR INDEX
 // ---------------------------------------------------------
 app.get("/api/admin/invoice/:id", (req, res) => {
   const reservations = loadReservations();
@@ -181,7 +206,7 @@ app.get("/api/admin/invoice/:id", (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 ADMIN : CRÉER UNE PRÉ-RÉSERVATION (BLOQUER LES DATES)
+// 🔥 ADMIN : CRÉER UNE PRÉ-RÉSERVATION
 // ---------------------------------------------------------
 app.post("/api/admin/create", (req, res) => {
   const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
@@ -199,7 +224,7 @@ app.post("/api/admin/create", (req, res) => {
     dateArrivee,
     dateDepart,
     price,
-    status: "non payer", // 🔒 dates bloquées, en attente de paiement
+    status: "non payer",
     createdAt: new Date().toISOString(),
   };
 
@@ -210,15 +235,11 @@ app.post("/api/admin/create", (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 ADMIN : CRÉER UN LIEN DE PAIEMENT POUR UNE RÉSA EXISTANTE
+// 🔥 ADMIN : LIEN DE PAIEMENT
 // ---------------------------------------------------------
 app.post("/api/admin/create-payment-link", async (req, res) => {
   const { bungalow, name, email, dateArrivee, dateDepart, price, index } =
     req.body;
-
-  if (!bungalow || !name || !email || !dateArrivee || !dateDepart || !price) {
-    return res.status(400).json({ error: "Champs manquants" });
-  }
 
   try {
     const product = await stripe.products.create({
@@ -255,7 +276,7 @@ app.post("/api/admin/create-payment-link", async (req, res) => {
 });
 
 // ---------------------------------------------------------
-// 🔥 FONCTION GÉNÉRATION PDF
+// 🔥 GÉNÉRATION PDF
 // ---------------------------------------------------------
 function generateInvoice(res, reservation, invoiceId) {
   if (!reservation) {
@@ -307,22 +328,12 @@ function generateInvoice(res, reservation, invoiceId) {
 
   doc.fontSize(12).text("Merci pour votre confiance !");
   doc.text("À très bientôt aux Tonneaux des Ô.");
-  doc.text("Nous contacter au +262 693 63 66 81 ou par nos réseaux sociaux");
+  doc.text("Nous contacter au +262 693 63 66 81");
   doc.moveDown(1);
 
   doc.fontSize(12).fillColor("blue").text(
-    "Site web : https://h-1-y7xu.onrender.com/",
-    { link: "https://h-1-y7xu.onrender.com/", underline: true }
-  );
-
-  doc.moveDown(0.5);
-
-  doc.fontSize(12).fillColor("blue").text(
-    "Voir sur Google Maps : Les Tonneaux des Ô, Bois Court, La Réunion",
-    {
-      link: "https://maps.app.goo.gl/mN6qmCc6vyYHPfSb7",
-      underline: true,
-    }
+    "Site web : https://h-1-y7xu.onrender.com/main.html",
+    { link: "https://h-1-y7xu.onrender.com/main.html", underline: true }
   );
 
   doc.end();
