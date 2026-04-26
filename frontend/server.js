@@ -1,94 +1,12 @@
-const express = require("express");
-const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const folder = path.join(__dirname, "frontend");
+const output = path.join(folder, "mp3.json");
 
-// Dossier frontend
-const frontend = path.join(__dirname, "frontend");
+const files = fs.readdirSync(folder)
+    .filter(f => f.toLowerCase().endsWith(".mp3"));
 
-// Dossier uploads
-const uploadFolder = path.join(frontend, "uploads");
-if (!fs.existsSync(uploadFolder)) fs.mkdirSync(uploadFolder, { recursive: true });
+fs.writeFileSync(output, JSON.stringify(files, null, 2));
 
-// Fonction pour régénérer mp3.json
-function regenerateMp3Json() {
-    let files = [];
-
-    // Fichiers du créateur
-    fs.readdirSync(frontend).forEach(f => {
-        if (f.endsWith(".mp3")) {
-            files.push({
-                file: "/" + f,
-                addedBy: "le créateur"
-            });
-        }
-    });
-
-    // Fichiers uploadés
-    fs.readdirSync(uploadFolder).forEach(f => {
-        if (f.endsWith(".mp3")) {
-            const metaFile = path.join(uploadFolder, f + ".meta.json");
-            let addedBy = "le créateur";
-
-            if (fs.existsSync(metaFile)) {
-                try {
-                    const meta = JSON.parse(fs.readFileSync(metaFile));
-                    addedBy = meta.addedBy || "le créateur";
-                } catch (e) {}
-            }
-
-            files.push({
-                file: "/uploads/" + f,
-                addedBy
-            });
-        }
-    });
-
-    fs.writeFileSync(
-        path.join(frontend, "mp3.json"),
-        JSON.stringify(files, null, 2)
-    );
-
-    console.log("mp3.json mis à jour :", files.length, "fichiers");
-}
-
-// Multer config
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadFolder),
-    filename: (req, file, cb) => {
-        const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-_ ]/g, "");
-        cb(null, safeName);
-    }
-});
-
-const upload = multer({ storage });
-
-// Servir le frontend
-app.use(express.static(frontend));
-
-// Upload route
-app.post("/upload", upload.single("fichier"), (req, res) => {
-    try {
-        const prenom = (req.body.prenom || "Inconnu").trim() || "Inconnu";
-
-        const meta = { addedBy: prenom };
-        const metaPath = path.join(uploadFolder, req.file.filename + ".meta.json");
-        fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-
-        regenerateMp3Json();
-
-        res.send("Fichier téléversé avec succès !");
-    } catch (e) {
-        console.error(e);
-        res.status(500).send("Erreur lors du téléversement.");
-    }
-});
-
-// Démarrage
-app.listen(PORT, () => {
-    console.log("Serveur lancé sur port", PORT);
-    regenerateMp3Json();
-});
+console.log("mp3.json généré avec :", files.length, "fichiers");
