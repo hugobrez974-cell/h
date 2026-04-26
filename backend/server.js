@@ -12,7 +12,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // 🌐 Domaines autorisés
 const allowedOrigins = [
-  "https://les-tonneaux-des-o.onrender.com", // ton site officiel
+  "https://h-1-y7xu.onrender.com", // ton site officiel
   "http://localhost:3000",                   // pour tests locaux
   "http://127.0.0.1:3000",                   // pour tests locaux
   "http://165.169.59.79",                    // ton IP publique
