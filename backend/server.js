@@ -3,44 +3,16 @@ import fs from "fs";
 import path from "path";
 import Stripe from "stripe";
 import PDFDocument from "pdfkit";
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
+// ✔ CORS totalement ouvert (aucune restriction)
+app.use(cors());
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// 🌐 Domaines autorisés
-const allowedOrigins = [
-  "https://h-1-y7xu.onrender.com/", // ton site officiel
-  "http://localhost:3000",                   // tests locaux
-  "http://127.0.0.1:3000",                   // tests locaux
-  "http://165.169.59.79",                    // ton IP publique
-  "http://165.169.59.79:3000"                // ton IP avec port
-];
-
-// 🔒 Middleware CORS sécurisé
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  // ✔ Autoriser les requêtes SANS origin (PDF, mobile, Postman)
-  if (!origin) {
-    return next();
-  }
-
-  // ✔ Autoriser uniquement les origines validées
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
-    res.header("Access-Control-Allow-Headers", "Content-Type");
-    return next();
-  }
-
-  // ❌ Toute autre origine = refus
-  return res.status(403).json({
-    error: "Accès refusé : domaine non autorisé"
-  });
-});
 
 // 🌐 Route d’accueil
 app.get("/", (req, res) => {
