@@ -12,9 +12,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // 🌐 Domaines autorisés
 const allowedOrigins = [
-  "https://h-1-y7xu.onrender.com", // ton site officiel
-  "http://localhost:3000",                   // pour tests locaux
-  "http://127.0.0.1:3000",                   // pour tests locaux
+  "https://h-1-y7xu.onrender.com/", // ton site officiel
+  "http://localhost:3000",                   // tests locaux
+  "http://127.0.0.1:3000",                   // tests locaux
   "http://165.169.59.79",                    // ton IP publique
   "http://165.169.59.79:3000"                // ton IP avec port
 ];
@@ -23,6 +23,12 @@ const allowedOrigins = [
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
+  // ✔ Autoriser les requêtes SANS origin (PDF, mobile, Postman)
+  if (!origin) {
+    return next();
+  }
+
+  // ✔ Autoriser uniquement les origines validées
   if (allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
     res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
@@ -30,13 +36,13 @@ app.use((req, res, next) => {
     return next();
   }
 
-  // ❌ Toute autre origine = accès refusé
+  // ❌ Toute autre origine = refus
   return res.status(403).json({
     error: "Accès refusé : domaine non autorisé"
   });
 });
 
-// 🌐 Route d’accueil (évite Cannot GET /)
+// 🌐 Route d’accueil
 app.get("/", (req, res) => {
   res.send("Backend Les Tonneaux des Ô opérationnel ✔");
 });
@@ -56,7 +62,7 @@ function saveReservations(data) {
 }
 
 // ---------------------------------------------------------
-// 🔥 CRÉATION SESSION STRIPE (RÉSA CLASSIQUE CLIENT)
+// 🔥 CRÉATION SESSION STRIPE (CLIENT)
 // ---------------------------------------------------------
 app.post("/api/create-checkout-session", async (req, res) => {
   const { bungalow, name, email, dateArrivee, dateDepart, price } = req.body;
@@ -257,7 +263,7 @@ app.post("/api/admin/create-payment-link", async (req, res) => {
       after_completion: {
         type: "redirect",
         redirect: {
-          url: "https://les-tonneaux-des-o.onrender.com/success.html",
+          url: "https://h-1-y7xu.onrender.com/success.html",
         },
       },
     });
@@ -332,8 +338,8 @@ function generateInvoice(res, reservation, invoiceId) {
   doc.moveDown(1);
 
   doc.fontSize(12).fillColor("blue").text(
-    "Site web : https://h-1-y7xu.onrender.com/main.html",
-    { link: "https://h-1-y7xu.onrender.com/main.html", underline: true }
+    "Site web : https://h-1-y7xu.onrender.com/",
+    { link: "https://h-1-y7xu.onrender.com/", underline: true }
   );
 
   doc.end();
